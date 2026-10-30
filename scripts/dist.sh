@@ -32,10 +32,26 @@ for target in "${targets[@]}"; do
     CGO_ENABLED=0 GOOS="$os" GOARCH="$arch" go build -trimpath -o "$binary" ./cmd/erp-skill
   )
   cp "$root/README.md" "$root/LICENSE" "$root/manifest.json" "$package_dir/"
+  find "$package_dir" -exec touch -t 198001010000 {} +
   if [[ "$os" == "windows" ]]; then
-    (cd "$stage" && zip -qr "$dist/$name.zip" "$name")
+    (
+      cd "$stage"
+      zip -X -q "$dist/$name.zip" \
+        "$name/LICENSE" \
+        "$name/README.md" \
+        "$name/manifest.json" \
+        "$name/erp-skill.exe"
+    )
   else
-    tar -C "$stage" -czf "$dist/$name.tar.gz" "$name"
+    (
+      cd "$stage"
+      COPYFILE_DISABLE=1 tar --format ustar -cf - \
+        "$name/LICENSE" \
+        "$name/README.md" \
+        "$name/manifest.json" \
+        "$name/erp-skill" \
+        | gzip -n > "$dist/$name.tar.gz"
+    )
   fi
 done
 
