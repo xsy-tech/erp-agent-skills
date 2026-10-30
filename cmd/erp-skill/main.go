@@ -2,10 +2,12 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os"
 
 	bundle "github.com/go-saas/erp-agent-skill"
+	"github.com/go-saas/erp-agent-skill/internal/cli"
 	"github.com/go-saas/erp-agent-skill/internal/manifest"
 )
 
@@ -15,10 +17,13 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	if len(os.Args) == 2 && os.Args[1] == "version" {
-		fmt.Printf("erp-skill %s\n", value.Version)
-		return
+	app, err := cli.NewDefault(value.Version)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
-	fmt.Fprintln(os.Stderr, "usage: erp-skill version")
-	os.Exit(2)
+	if err := app.Run(context.Background(), os.Args[1:]); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
 }
