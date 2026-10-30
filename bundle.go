@@ -11,3 +11,8 @@ var ManifestJSON []byte
 //
 //go:embed SKILL.md references/*.md
 var SkillFS embed.FS
+
+// ConnectorFS contains the WorkBuddy connector templates.
+//
+//go:embed adapters/workbuddy/*
+var ConnectorFS embed.FS

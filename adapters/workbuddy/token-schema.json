@@ -1,0 +1,11 @@
+{
+  "fields": [
+    {
+      "key": "ERP_OPEN_API_KEY",
+      "label": "ERP Open Platform API Key",
+      "type": "password",
+      "required": true,
+      "placeholder": "Enter your personal ERP API Key"
+    }
+  ]
+}

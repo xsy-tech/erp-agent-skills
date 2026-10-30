@@ -1,0 +1,10 @@
+{
+  "id": "erp-open-platform",
+  "name": "ERP Open Platform",
+  "description": "Use authorized ERP OpenAPI and MCP business capabilities.",
+  "version": "0.1.0",
+  "vendor": "XSN",
+  "min_workbuddy_version": "4.23.0",
+  "tags": ["erp", "openapi", "mcp"],
+  "auth_mode": "token"
+}

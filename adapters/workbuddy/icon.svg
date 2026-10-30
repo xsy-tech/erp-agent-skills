@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="ERP Open Platform">
+  <rect width="64" height="64" rx="8" fill="#0f766e"/>
+  <path d="M32 9 50 16v13c0 12-7.5 21.5-18 26-10.5-4.5-18-14-18-26V16l18-7Z" fill="none" stroke="#fff" stroke-width="5"/>
+  <path d="m23 32 6 6 12-14" fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+</svg>

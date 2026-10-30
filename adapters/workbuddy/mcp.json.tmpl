@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "erp-open-platform": {
+      "type": "streamableHttp",
+      "url": {{printf "%q" .Endpoint}},
+      "headers": {
+        "Authorization": "Bearer ${ERP_OPEN_API_KEY}"
+      }
+    }
+  }
+}
