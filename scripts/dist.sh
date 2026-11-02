@@ -29,7 +29,7 @@ for target in "${targets[@]}"; do
   fi
   (
     cd "$root"
-    CGO_ENABLED=0 GOOS="$os" GOARCH="$arch" go build -trimpath -o "$binary" ./cmd/erp-skill
+    CGO_ENABLED=0 GOOS="$os" GOARCH="$arch" go build -trimpath -buildvcs=false -o "$binary" ./cmd/erp-skill
   )
   cp "$root/README.md" "$root/LICENSE" "$root/manifest.json" "$package_dir/"
   if [[ "$os" == "windows" ]]; then

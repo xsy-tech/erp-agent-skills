@@ -123,6 +123,204 @@ esac
 	}
 }
 
+func TestReleaseArtifactsIgnoreGitMetadata(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("distribution script requires bash")
+	}
+
+	worktreeRoot, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("get worktree root: %v", err)
+	}
+	tempRepo := filepath.Join(t.TempDir(), "independent-repo")
+	copyTrackedRepository(t, worktreeRoot, tempRepo)
+	initializeIndependentRepository(t, tempRepo)
+
+	for _, root := range []string{worktreeRoot, tempRepo} {
+		runReleaseCommand(t, root, "make", "build")
+		runReleaseCommand(t, root, "make", "dist")
+	}
+
+	worktreeBinary := readTestFile(t, filepath.Join(worktreeRoot, "bin", "erp-skill"))
+	tempRepoBinary := readTestFile(t, filepath.Join(tempRepo, "bin", "erp-skill"))
+	if !bytes.Equal(worktreeBinary, tempRepoBinary) {
+		t.Error("make build binary differs across Git contexts")
+	}
+	assertNoVCSBuildInfo(t, "worktree make build binary", worktreeBinary)
+	assertNoVCSBuildInfo(t, "independent repo make build binary", tempRepoBinary)
+
+	archiveNames := []string{
+		fmt.Sprintf("erp-agent-skill_%s_darwin_amd64.tar.gz", Version),
+		fmt.Sprintf("erp-agent-skill_%s_darwin_arm64.tar.gz", Version),
+		fmt.Sprintf("erp-agent-skill_%s_linux_amd64.tar.gz", Version),
+		fmt.Sprintf("erp-agent-skill_%s_linux_arm64.tar.gz", Version),
+		fmt.Sprintf("erp-agent-skill_%s_windows_amd64.zip", Version),
+	}
+	for _, name := range archiveNames {
+		worktreeArchive := readTestFile(t, filepath.Join(worktreeRoot, "dist", name))
+		tempRepoArchive := readTestFile(t, filepath.Join(tempRepo, "dist", name))
+		worktreeArchiveBinary := readArchiveBinary(t, name, worktreeArchive)
+		tempRepoArchiveBinary := readArchiveBinary(t, name, tempRepoArchive)
+		if !bytes.Equal(worktreeArchiveBinary, tempRepoArchiveBinary) {
+			t.Errorf("%s binary differs across Git contexts", name)
+		}
+		if !bytes.Equal(worktreeArchive, tempRepoArchive) {
+			t.Errorf("%s differs across Git contexts", name)
+		}
+		assertNoVCSBuildInfo(t, "worktree "+name+" binary", worktreeArchiveBinary)
+		assertNoVCSBuildInfo(t, "independent repo "+name+" binary", tempRepoArchiveBinary)
+	}
+
+	worktreeChecksums := readTestFile(t, filepath.Join(worktreeRoot, "dist", "checksums.txt"))
+	tempRepoChecksums := readTestFile(t, filepath.Join(tempRepo, "dist", "checksums.txt"))
+	if !bytes.Equal(worktreeChecksums, tempRepoChecksums) {
+		t.Error("checksums.txt differs across Git contexts")
+	}
+}
+
+func copyTrackedRepository(t *testing.T, sourceRoot, destinationRoot string) {
+	t.Helper()
+	command := exec.Command("git", "ls-files", "-z")
+	command.Dir = sourceRoot
+	output, err := command.Output()
+	if err != nil {
+		t.Fatalf("list tracked files: %v", err)
+	}
+	for _, relativePath := range strings.Split(string(output), "\x00") {
+		if relativePath == "" {
+			continue
+		}
+		sourcePath := filepath.Join(sourceRoot, relativePath)
+		destinationPath := filepath.Join(destinationRoot, relativePath)
+		info, err := os.Lstat(sourcePath)
+		if err != nil {
+			t.Fatalf("inspect tracked file %s: %v", relativePath, err)
+		}
+		if err := os.MkdirAll(filepath.Dir(destinationPath), 0o755); err != nil {
+			t.Fatalf("create parent for %s: %v", relativePath, err)
+		}
+		if info.Mode()&os.ModeSymlink != 0 {
+			target, err := os.Readlink(sourcePath)
+			if err != nil {
+				t.Fatalf("read symlink %s: %v", relativePath, err)
+			}
+			if err := os.Symlink(target, destinationPath); err != nil {
+				t.Fatalf("copy symlink %s: %v", relativePath, err)
+			}
+			continue
+		}
+		content := readTestFile(t, sourcePath)
+		if err := os.WriteFile(destinationPath, content, info.Mode().Perm()); err != nil {
+			t.Fatalf("copy tracked file %s: %v", relativePath, err)
+		}
+	}
+}
+
+func initializeIndependentRepository(t *testing.T, root string) {
+	t.Helper()
+	runGitCommand(t, root, nil, "init", "-q")
+	runGitCommand(t, root, nil, "config", "user.name", "Release Test")
+	runGitCommand(t, root, nil, "config", "user.email", "release-test@example.invalid")
+	runGitCommand(t, root, nil, "add", "--all")
+	runGitCommand(t, root, []string{
+		"GIT_AUTHOR_DATE=2001-01-01T00:00:00Z",
+		"GIT_COMMITTER_DATE=2001-01-01T00:00:00Z",
+	}, "-c", "commit.gpgsign=false", "-c", "core.hooksPath=/dev/null", "commit", "-q", "-m", "independent release context")
+}
+
+func runGitCommand(t *testing.T, root string, extraEnv []string, args ...string) {
+	t.Helper()
+	command := exec.Command("git", args...)
+	command.Dir = root
+	command.Env = append(os.Environ(), extraEnv...)
+	if output, err := command.CombinedOutput(); err != nil {
+		t.Fatalf("git %s in %s: %v\n%s", strings.Join(args, " "), root, err, output)
+	}
+}
+
+func runReleaseCommand(t *testing.T, root, name string, args ...string) {
+	t.Helper()
+	command := exec.Command(name, args...)
+	command.Dir = root
+	command.Env = append(os.Environ(), "LC_ALL=C", "LANG=C", "TZ=UTC")
+	if output, err := command.CombinedOutput(); err != nil {
+		t.Fatalf("run %s %s in %s: %v\n%s", name, strings.Join(args, " "), root, err, output)
+	}
+}
+
+func readArchiveBinary(t *testing.T, archiveName string, content []byte) []byte {
+	t.Helper()
+	binarySuffix := "/erp-skill"
+	if strings.HasSuffix(archiveName, ".zip") {
+		binarySuffix += ".exe"
+		reader, err := zip.NewReader(bytes.NewReader(content), int64(len(content)))
+		if err != nil {
+			t.Fatalf("open %s: %v", archiveName, err)
+		}
+		for _, file := range reader.File {
+			if strings.HasSuffix(file.Name, binarySuffix) {
+				entry, err := file.Open()
+				if err != nil {
+					t.Fatalf("open %s binary: %v", archiveName, err)
+				}
+				binary, readErr := io.ReadAll(entry)
+				closeErr := entry.Close()
+				if readErr != nil {
+					t.Fatalf("read %s binary: %v", archiveName, readErr)
+				}
+				if closeErr != nil {
+					t.Fatalf("close %s binary: %v", archiveName, closeErr)
+				}
+				return binary
+			}
+		}
+		t.Fatalf("find binary in %s", archiveName)
+	}
+
+	gzipReader, err := gzip.NewReader(bytes.NewReader(content))
+	if err != nil {
+		t.Fatalf("open %s gzip stream: %v", archiveName, err)
+	}
+	defer gzipReader.Close()
+	tarReader := tar.NewReader(gzipReader)
+	for {
+		header, err := tarReader.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			t.Fatalf("read %s tar header: %v", archiveName, err)
+		}
+		if strings.HasSuffix(header.Name, binarySuffix) {
+			binary, err := io.ReadAll(tarReader)
+			if err != nil {
+				t.Fatalf("read %s binary: %v", archiveName, err)
+			}
+			return binary
+		}
+	}
+	t.Fatalf("find binary in %s", archiveName)
+	return nil
+}
+
+func assertNoVCSBuildInfo(t *testing.T, label string, binary []byte) {
+	t.Helper()
+	binaryPath := filepath.Join(t.TempDir(), "erp-skill")
+	if err := os.WriteFile(binaryPath, binary, 0o755); err != nil {
+		t.Fatalf("write %s for build info inspection: %v", label, err)
+	}
+	command := exec.Command("go", "version", "-m", binaryPath)
+	output, err := command.CombinedOutput()
+	if err != nil {
+		t.Fatalf("inspect %s with go version -m: %v\n%s", label, err, output)
+	}
+	for _, field := range []string{"vcs.revision", "vcs.time", "vcs.modified"} {
+		if bytes.Contains(output, []byte(field)) {
+			t.Errorf("%s contains environment-dependent %s metadata:\n%s", label, field, output)
+		}
+	}
+}
+
 func prepareDistFixture(t *testing.T, root string) {
 	t.Helper()
 	if err := os.MkdirAll(filepath.Join(root, "scripts"), 0o755); err != nil {
