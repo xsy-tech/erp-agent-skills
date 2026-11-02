@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-version=${ERP_SKILL_VERSION:-0.1.0}
+version=${ERP_SKILL_VERSION:-0.1.1}
 base_url=${ERP_SKILL_RELEASE_BASE_URL:?set ERP_SKILL_RELEASE_BASE_URL to the release directory URL}
 install_dir=${ERP_SKILL_INSTALL_DIR:-"$HOME/.local/bin"}
 

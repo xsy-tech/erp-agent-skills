@@ -1,5 +1,5 @@
 param(
-  [string]$Version = $(if ($env:ERP_SKILL_VERSION) { $env:ERP_SKILL_VERSION } else { "0.1.0" }),
+  [string]$Version = $(if ($env:ERP_SKILL_VERSION) { $env:ERP_SKILL_VERSION } else { "0.1.1" }),
   [string]$BaseUrl = $env:ERP_SKILL_RELEASE_BASE_URL,
   [string]$InstallDir = $(if ($env:ERP_SKILL_INSTALL_DIR) { $env:ERP_SKILL_INSTALL_DIR } else { Join-Path $HOME ".local\bin" })
 )
