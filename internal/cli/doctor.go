@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -44,7 +45,45 @@ func (a *App) runDoctor(ctx context.Context, args []string) error {
 	if err != nil {
 		return redactError(err, secret)
 	}
-	encoder := json.NewEncoder(a.Out)
+	return encodeRedactedJSON(a.Out, result, secret)
+}
+
+func encodeRedactedJSON(writer io.Writer, value any, secret string) error {
+	encoded, err := json.Marshal(value)
+	if err != nil {
+		return redactError(err, secret)
+	}
+	decoder := json.NewDecoder(bytes.NewReader(encoded))
+	decoder.UseNumber()
+	var payload any
+	if err := decoder.Decode(&payload); err != nil {
+		return redactError(err, secret)
+	}
+	encoder := json.NewEncoder(writer)
 	encoder.SetIndent("", "  ")
-	return encoder.Encode(result)
+	return redactError(encoder.Encode(redactJSONValue(payload, secret)), secret)
+}
+
+func redactJSONValue(value any, secret string) any {
+	if secret == "" {
+		return value
+	}
+	switch typed := value.(type) {
+	case string:
+		return strings.ReplaceAll(typed, secret, "[REDACTED]")
+	case []any:
+		for index := range typed {
+			typed[index] = redactJSONValue(typed[index], secret)
+		}
+		return typed
+	case map[string]any:
+		redacted := make(map[string]any, len(typed))
+		for key, item := range typed {
+			redactedKey := strings.ReplaceAll(key, secret, "[REDACTED]")
+			redacted[redactedKey] = redactJSONValue(item, secret)
+		}
+		return redacted
+	default:
+		return value
+	}
 }

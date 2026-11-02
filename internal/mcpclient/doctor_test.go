@@ -1,12 +1,15 @@
 package mcpclient
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -17,6 +20,58 @@ import (
 type noInput struct{}
 type testOutput struct {
 	OK bool `json:"ok"`
+}
+
+type listResponseTransport struct {
+	base   http.RoundTripper
+	mu     sync.Mutex
+	page   int
+	mutate func(int, map[string]any)
+}
+
+func (t *listResponseTransport) RoundTrip(request *http.Request) (*http.Response, error) {
+	requestBody, err := io.ReadAll(request.Body)
+	if err != nil {
+		return nil, err
+	}
+	request.Body = io.NopCloser(bytes.NewReader(requestBody))
+	var rpcRequest struct {
+		Method string `json:"method"`
+	}
+	if err := json.Unmarshal(requestBody, &rpcRequest); err != nil || rpcRequest.Method != "tools/list" {
+		return t.base.RoundTrip(request)
+	}
+
+	response, err := t.base.RoundTrip(request)
+	if err != nil {
+		return nil, err
+	}
+	responseBody, err := io.ReadAll(response.Body)
+	if err != nil {
+		response.Body.Close()
+		return nil, err
+	}
+	response.Body.Close()
+	var rpcResponse map[string]any
+	if err := json.Unmarshal(responseBody, &rpcResponse); err != nil {
+		return nil, err
+	}
+	result, ok := rpcResponse["result"].(map[string]any)
+	if !ok {
+		return nil, errors.New("tools/list response missing result")
+	}
+	t.mu.Lock()
+	t.page++
+	t.mutate(t.page, result)
+	responseBody, err = json.Marshal(rpcResponse)
+	t.mu.Unlock()
+	if err != nil {
+		return nil, err
+	}
+	response.Body = io.NopCloser(bytes.NewReader(responseBody))
+	response.ContentLength = int64(len(responseBody))
+	response.Header.Del("Content-Length")
+	return response, nil
 }
 
 func TestDoctorVerifiesPlatformInfoAfterListingAllTools(t *testing.T) {
@@ -90,6 +145,82 @@ func TestDoctorVerifiesPlatformInfoAfterListingAllTools(t *testing.T) {
 	}
 	if got := writeCalls.Load(); got != 0 {
 		t.Fatalf("write tool calls = %d, want 0", got)
+	}
+}
+
+func TestDoctorRejectsRepeatedToolsCursor(t *testing.T) {
+	server := mcp.NewServer(
+		&mcp.Implementation{Name: "erp-open-platform", Version: "1.2.3"},
+		&mcp.ServerOptions{PageSize: 1},
+	)
+	for _, name := range []string{"a_tool", "get_platform_info", "z_tool"} {
+		mcp.AddTool(server, &mcp.Tool{Name: name, Description: "test"}, func(context.Context, *mcp.CallToolRequest, noInput) (*mcp.CallToolResult, testOutput, error) {
+			return nil, testOutput{OK: true}, nil
+		})
+	}
+	handler := mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server { return server }, &mcp.StreamableHTTPOptions{Stateless: true, JSONResponse: true})
+	testServer := httptest.NewServer(handler)
+	defer testServer.Close()
+
+	var firstCursor string
+	transport := &listResponseTransport{
+		base: testServer.Client().Transport,
+		mutate: func(page int, result map[string]any) {
+			if page == 1 {
+				firstCursor, _ = result["nextCursor"].(string)
+				return
+			}
+			result["nextCursor"] = firstCursor
+		},
+	}
+	client := New()
+	client.Timeout = 100 * time.Millisecond
+	client.HTTPClient = &http.Client{Transport: transport}
+
+	_, err := client.Doctor(t.Context(), testServer.URL, "secret")
+	if err == nil || !errors.Is(err, ErrUnavailable) {
+		t.Fatalf("Doctor() error = %v, want unavailable for repeated cursor", err)
+	}
+	if errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("Doctor() waited for timeout instead of rejecting repeated cursor: %v", err)
+	}
+}
+
+func TestDoctorDeduplicatesToolNamesAcrossPages(t *testing.T) {
+	server := mcp.NewServer(
+		&mcp.Implementation{Name: "erp-open-platform", Version: "1.2.3"},
+		&mcp.ServerOptions{PageSize: 1},
+	)
+	for _, name := range []string{"a_tool", "get_platform_info"} {
+		mcp.AddTool(server, &mcp.Tool{Name: name, Description: "test"}, func(context.Context, *mcp.CallToolRequest, noInput) (*mcp.CallToolResult, testOutput, error) {
+			return nil, testOutput{OK: true}, nil
+		})
+	}
+	handler := mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server { return server }, &mcp.StreamableHTTPOptions{Stateless: true, JSONResponse: true})
+	testServer := httptest.NewServer(handler)
+	defer testServer.Close()
+
+	var firstTool any
+	transport := &listResponseTransport{
+		base: testServer.Client().Transport,
+		mutate: func(page int, result map[string]any) {
+			tools, _ := result["tools"].([]any)
+			if page == 1 {
+				firstTool = tools[0]
+				return
+			}
+			result["tools"] = append(tools, firstTool)
+		},
+	}
+	client := New()
+	client.HTTPClient = &http.Client{Transport: transport}
+
+	result, err := client.Doctor(t.Context(), testServer.URL, "secret")
+	if err != nil {
+		t.Fatalf("Doctor() error = %v", err)
+	}
+	if strings.Join(result.Tools, ",") != "a_tool,get_platform_info" {
+		t.Fatalf("Doctor() tools = %v, want canonical unique names", result.Tools)
 	}
 }
 

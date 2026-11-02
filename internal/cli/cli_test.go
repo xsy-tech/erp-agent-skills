@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/go-saas/erp-agent-skill/internal/mcpclient"
+	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
 type fakeCredentials struct {
@@ -173,18 +174,42 @@ func TestDoctorJSONStatusesDoNotLeakCredential(t *testing.T) {
 		result           mcpclient.DoctorResult
 		wantStatus       mcpclient.DoctorStatus
 		wantVerification bool
+		wantValue        string
 	}{
 		{
-			name: "verified",
+			name: "verified structured output",
 			result: mcpclient.DoctorResult{
 				Status:        mcpclient.DoctorStatusVerified,
 				ServerName:    "erp-open-platform",
 				ServerVersion: "1.2.3",
 				Tools:         []string{"get_platform_info"},
-				Verification:  &mcpclient.VerificationResult{Tool: "get_platform_info", Output: map[string]any{"tenant": "demo"}},
+				Verification: &mcpclient.VerificationResult{Tool: "get_platform_info", Output: map[string]any{
+					"tenant":                 "demo",
+					"credential":             sentinel,
+					"credential-" + sentinel: "redacted key",
+				}},
 			},
 			wantStatus:       mcpclient.DoctorStatusVerified,
 			wantVerification: true,
+			wantValue:        "demo",
+		},
+		{
+			name: "verified unstructured output",
+			result: mcpclient.DoctorResult{
+				Status:        mcpclient.DoctorStatusVerified,
+				ServerName:    "erp-open-platform",
+				ServerVersion: "1.2.3",
+				Tools:         []string{"get_platform_info"},
+				Verification: &mcpclient.VerificationResult{
+					Tool: "get_platform_info",
+					Output: []mcp.Content{
+						&mcp.TextContent{Text: "platform-ready " + sentinel},
+					},
+				},
+			},
+			wantStatus:       mcpclient.DoctorStatusVerified,
+			wantVerification: true,
+			wantValue:        "platform-ready",
 		},
 		{
 			name: "authorization required",
@@ -227,8 +252,11 @@ func TestDoctorJSONStatusesDoNotLeakCredential(t *testing.T) {
 			if hasVerification != test.wantVerification {
 				t.Fatalf("doctor verification presence = %v, want %v: %s", hasVerification, test.wantVerification, stdout.String())
 			}
-			if strings.Contains(stdout.String(), sentinel) || strings.Contains(stderr.String(), sentinel) {
-				t.Fatalf("doctor leaked credential: stdout=%q stderr=%q", stdout.String(), stderr.String())
+			if test.wantValue != "" && !strings.Contains(stdout.String(), test.wantValue) {
+				t.Fatalf("doctor JSON lost non-secret value %q: %s", test.wantValue, stdout.String())
+			}
+			if strings.Contains(stdout.String(), sentinel) || strings.Contains(stderr.String(), sentinel) || (runErr != nil && strings.Contains(runErr.Error(), sentinel)) {
+				t.Fatalf("doctor leaked credential: stdout=%q stderr=%q error=%v", stdout.String(), stderr.String(), runErr)
 			}
 		})
 	}

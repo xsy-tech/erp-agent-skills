@@ -74,6 +74,8 @@ func (c *Client) Doctor(ctx context.Context, endpoint, key string) (DoctorResult
 		Tools:         []string{},
 	}
 	hasPlatformInfo := false
+	seenCursors := make(map[string]struct{})
+	seenTools := make(map[string]struct{})
 	params := &mcp.ListToolsParams{}
 	for {
 		page, listErr := session.ListTools(doctorContext, params)
@@ -81,6 +83,10 @@ func (c *Client) Doctor(ctx context.Context, endpoint, key string) (DoctorResult
 			return DoctorResult{}, doctorError(doctorContext, parsed.Host, listErr)
 		}
 		for _, tool := range page.Tools {
+			if _, exists := seenTools[tool.Name]; exists {
+				continue
+			}
+			seenTools[tool.Name] = struct{}{}
 			result.Tools = append(result.Tools, tool.Name)
 			if tool.Name == "get_platform_info" {
 				hasPlatformInfo = true
@@ -89,6 +95,10 @@ func (c *Client) Doctor(ctx context.Context, endpoint, key string) (DoctorResult
 		if page.NextCursor == "" {
 			break
 		}
+		if _, exists := seenCursors[page.NextCursor]; exists {
+			return DoctorResult{}, doctorError(doctorContext, parsed.Host, errors.New("tools list returned a repeated cursor"))
+		}
+		seenCursors[page.NextCursor] = struct{}{}
 		params.Cursor = page.NextCursor
 	}
 	sort.Strings(result.Tools)
