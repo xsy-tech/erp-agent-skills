@@ -17,6 +17,20 @@ targets=(
   windows/amd64
 )
 
+tar_version=$(tar --version 2>/dev/null || true)
+case "$tar_version" in
+  *bsdtar*)
+    tar_owner_options=(--uid 0 --gid 0 --uname root --gname root)
+    ;;
+  *"GNU tar"*)
+    tar_owner_options=(--owner=root --group=root)
+    ;;
+  *)
+    echo "unsupported tar implementation; bsdtar or GNU tar is required" >&2
+    exit 1
+    ;;
+esac
+
 for target in "${targets[@]}"; do
   os=${target%/*}
   arch=${target#*/}
@@ -45,7 +59,7 @@ for target in "${targets[@]}"; do
   else
     (
       cd "$stage"
-      COPYFILE_DISABLE=1 tar --format ustar -cf - \
+      COPYFILE_DISABLE=1 tar --format ustar "${tar_owner_options[@]}" -cf - \
         "$name/LICENSE" \
         "$name/README.md" \
         "$name/manifest.json" \
