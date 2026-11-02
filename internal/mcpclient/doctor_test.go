@@ -14,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	bundle "github.com/go-saas/erp-agent-skill"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -79,6 +80,7 @@ func TestDoctorVerifiesPlatformInfoAfterListingAllTools(t *testing.T) {
 	var platformCalls atomic.Int32
 	var writeCalls atomic.Int32
 	arguments := make(chan string, 2)
+	clientVersions := make(chan string, 1)
 	server := mcp.NewServer(
 		&mcp.Implementation{Name: "erp-open-platform", Version: "1.2.3"},
 		&mcp.ServerOptions{Instructions: "Use tools/list as runtime authority.", PageSize: 1},
@@ -89,6 +91,11 @@ func TestDoctorVerifiesPlatformInfoAfterListingAllTools(t *testing.T) {
 	mcp.AddTool(server, &mcp.Tool{Name: "get_platform_info", Description: "verify"}, func(_ context.Context, request *mcp.CallToolRequest, _ noInput) (*mcp.CallToolResult, testOutput, error) {
 		platformCalls.Add(1)
 		arguments <- string(request.Params.Arguments)
+		if clientInfo := request.ClientInfo(); clientInfo != nil {
+			clientVersions <- clientInfo.Version
+		} else {
+			clientVersions <- ""
+		}
 		return nil, testOutput{OK: true}, nil
 	})
 	mcp.AddTool(server, &mcp.Tool{Name: "create_order", Description: "write"}, func(context.Context, *mcp.CallToolRequest, noInput) (*mcp.CallToolResult, testOutput, error) {
@@ -142,6 +149,14 @@ func TestDoctorVerifiesPlatformInfoAfterListingAllTools(t *testing.T) {
 		}
 	case <-time.After(time.Second):
 		t.Fatal("get_platform_info arguments were not recorded")
+	}
+	select {
+	case got := <-clientVersions:
+		if got != bundle.Version {
+			t.Fatalf("MCP client version = %q, want %q", got, bundle.Version)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("MCP client version was not recorded")
 	}
 	if got := writeCalls.Load(); got != 0 {
 		t.Fatalf("write tool calls = %d, want 0", got)

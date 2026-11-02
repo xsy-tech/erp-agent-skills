@@ -64,6 +64,13 @@ printf '%s\n' "$ERP_OPEN_API_KEY" | \
   --key-stdin
 ```
 
+## Doctor Verification
+
+`erp-skill doctor` performs MCP `initialize`, reads every page of `tools/list`, and then invokes only the read-only `get_platform_info` tool when that tool is authorized. It does not invoke any write-capable business tool.
+
+- `VERIFIED` means initialization, tool discovery, and `get_platform_info` verification succeeded.
+- `INSTALLED_AUTHORIZATION_REQUIRED` means `initialize` and `tools/list` succeeded, but the current API Key does not expose `get_platform_info`; an administrator must grant the required authorization before verification can complete.
+
 ## Credential Rules
 
 - Never pass a key through `--key`; that option is intentionally unsupported.

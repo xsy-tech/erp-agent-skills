@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	bundle "github.com/go-saas/erp-agent-skill"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -54,7 +55,7 @@ func (c *Client) Doctor(ctx context.Context, endpoint, key string) (DoctorResult
 	doctorContext, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	client := mcp.NewClient(&mcp.Implementation{Name: "erp-agent-skill", Version: "0.1.0"}, nil)
+	client := mcp.NewClient(&mcp.Implementation{Name: "erp-agent-skill", Version: bundle.Version}, nil)
 	session, err := client.Connect(doctorContext, &mcp.StreamableClientTransport{
 		Endpoint: endpoint, HTTPClient: c.authenticatedHTTPClient(key), DisableStandaloneSSE: true, MaxRetries: -1,
 	}, nil)
