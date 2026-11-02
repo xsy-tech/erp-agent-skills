@@ -3,6 +3,7 @@ package cli
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"path/filepath"
 	"reflect"
@@ -107,7 +108,12 @@ func newTestApp(t *testing.T) (*App, *bytes.Buffer, *fakeCredentials, *fakeProfi
 		Credentials: credentials,
 		Profiles:    profiles,
 		Doctor: fakeDoctor{result: mcpclient.DoctorResult{
-			ServerName: "erp-open-platform", ServerVersion: "1.0.0", Instructions: "instructions", Tools: []string{"search_users"},
+			Status:        mcpclient.DoctorStatusVerified,
+			ServerName:    "erp-open-platform",
+			ServerVersion: "1.0.0",
+			Instructions:  "instructions",
+			Tools:         []string{"get_platform_info", "search_users"},
+			Verification:  &mcpclient.VerificationResult{Tool: "get_platform_info", Output: map[string]any{"ok": true}},
 		}},
 		Commands: commands,
 		Launch: func(_ context.Context, command string, args []string, envKey, secret string) error {
@@ -157,6 +163,90 @@ func TestDoctorAndLaunchUseStoredCredential(t *testing.T) {
 	if !reflect.DeepEqual((*launches)[0].args, []string{"--model", "gpt"}) {
 		t.Fatalf("launch args = %v", (*launches)[0].args)
 	}
+}
+
+func TestDoctorJSONStatusesDoNotLeakCredential(t *testing.T) {
+	const sentinel = "recognizable-sentinel-key"
+	endpoint := "https://erp.example.com/mcp"
+	for _, test := range []struct {
+		name             string
+		result           mcpclient.DoctorResult
+		wantStatus       mcpclient.DoctorStatus
+		wantVerification bool
+	}{
+		{
+			name: "verified",
+			result: mcpclient.DoctorResult{
+				Status:        mcpclient.DoctorStatusVerified,
+				ServerName:    "erp-open-platform",
+				ServerVersion: "1.2.3",
+				Tools:         []string{"get_platform_info"},
+				Verification:  &mcpclient.VerificationResult{Tool: "get_platform_info", Output: map[string]any{"tenant": "demo"}},
+			},
+			wantStatus:       mcpclient.DoctorStatusVerified,
+			wantVerification: true,
+		},
+		{
+			name: "authorization required",
+			result: mcpclient.DoctorResult{
+				Status:        mcpclient.DoctorStatusAuthorizationRequired,
+				ServerName:    "erp-open-platform",
+				ServerVersion: "1.2.3",
+				Tools:         []string{},
+			},
+			wantStatus: mcpclient.DoctorStatusAuthorizationRequired,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			app, stdout, credentials, _, _, _ := newTestApp(t)
+			stderr := app.Err.(*bytes.Buffer)
+			credentials.values = map[string]string{"codex|" + endpoint: sentinel}
+			app.Doctor = fakeDoctor{result: test.result}
+
+			runErr := app.Run(t.Context(), []string{"doctor", "codex", "--url", endpoint})
+			if runErr != nil {
+				t.Fatalf("doctor error = %v", runErr)
+			}
+			var payload map[string]json.RawMessage
+			if err := json.Unmarshal(stdout.Bytes(), &payload); err != nil {
+				t.Fatalf("doctor JSON = %q: %v", stdout.String(), err)
+			}
+			var status mcpclient.DoctorStatus
+			if err := json.Unmarshal(payload["status"], &status); err != nil {
+				t.Fatalf("doctor status JSON = %s: %v", payload["status"], err)
+			}
+			if status != test.wantStatus {
+				t.Fatalf("doctor status = %q, want %q", status, test.wantStatus)
+			}
+			for _, key := range []string{"server_name", "server_version", "tools"} {
+				if _, ok := payload[key]; !ok {
+					t.Fatalf("doctor JSON missing %q: %s", key, stdout.String())
+				}
+			}
+			_, hasVerification := payload["verification"]
+			if hasVerification != test.wantVerification {
+				t.Fatalf("doctor verification presence = %v, want %v: %s", hasVerification, test.wantVerification, stdout.String())
+			}
+			if strings.Contains(stdout.String(), sentinel) || strings.Contains(stderr.String(), sentinel) {
+				t.Fatalf("doctor leaked credential: stdout=%q stderr=%q", stdout.String(), stderr.String())
+			}
+		})
+	}
+
+	t.Run("error path", func(t *testing.T) {
+		app, stdout, credentials, _, _, _ := newTestApp(t)
+		stderr := app.Err.(*bytes.Buffer)
+		credentials.values = map[string]string{"codex|" + endpoint: sentinel}
+		app.Doctor = fakeDoctor{err: errors.New("doctor failed with " + sentinel)}
+
+		runErr := app.Run(t.Context(), []string{"doctor", "codex", "--url", endpoint})
+		if runErr == nil {
+			t.Fatal("doctor error = nil, want error")
+		}
+		if strings.Contains(stdout.String(), sentinel) || strings.Contains(stderr.String(), sentinel) || strings.Contains(runErr.Error(), sentinel) {
+			t.Fatalf("doctor leaked credential: stdout=%q stderr=%q error=%q", stdout.String(), stderr.String(), runErr)
+		}
+	})
 }
 
 func TestCLIRejectsLiteralKeyAndRedactsFailures(t *testing.T) {

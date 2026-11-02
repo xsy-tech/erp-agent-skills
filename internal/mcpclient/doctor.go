@@ -18,11 +18,25 @@ var (
 	ErrUnavailable  = errors.New("MCP endpoint is unavailable")
 )
 
+type DoctorStatus string
+
+const (
+	DoctorStatusVerified              DoctorStatus = "VERIFIED"
+	DoctorStatusAuthorizationRequired DoctorStatus = "INSTALLED_AUTHORIZATION_REQUIRED"
+)
+
+type VerificationResult struct {
+	Tool   string `json:"tool"`
+	Output any    `json:"output"`
+}
+
 type DoctorResult struct {
-	ServerName    string
-	ServerVersion string
-	Instructions  string
-	Tools         []string
+	Status        DoctorStatus        `json:"status"`
+	ServerName    string              `json:"server_name"`
+	ServerVersion string              `json:"server_version"`
+	Instructions  string              `json:"instructions,omitempty"`
+	Tools         []string            `json:"tools"`
+	Verification  *VerificationResult `json:"verification,omitempty"`
 }
 
 func (c *Client) Doctor(ctx context.Context, endpoint, key string) (DoctorResult, error) {
@@ -57,7 +71,9 @@ func (c *Client) Doctor(ctx context.Context, endpoint, key string) (DoctorResult
 		ServerName:    initialize.ServerInfo.Name,
 		ServerVersion: initialize.ServerInfo.Version,
 		Instructions:  initialize.Instructions,
+		Tools:         []string{},
 	}
+	hasPlatformInfo := false
 	params := &mcp.ListToolsParams{}
 	for {
 		page, listErr := session.ListTools(doctorContext, params)
@@ -66,16 +82,36 @@ func (c *Client) Doctor(ctx context.Context, endpoint, key string) (DoctorResult
 		}
 		for _, tool := range page.Tools {
 			result.Tools = append(result.Tools, tool.Name)
+			if tool.Name == "get_platform_info" {
+				hasPlatformInfo = true
+			}
 		}
 		if page.NextCursor == "" {
 			break
 		}
 		params.Cursor = page.NextCursor
 	}
-	if len(result.Tools) == 0 {
-		return DoctorResult{}, fmt.Errorf("MCP endpoint %s: %w", parsed.Host, ErrNoTools)
-	}
 	sort.Strings(result.Tools)
+	if !hasPlatformInfo {
+		result.Status = DoctorStatusAuthorizationRequired
+		return result, nil
+	}
+	verification, callErr := session.CallTool(doctorContext, &mcp.CallToolParams{
+		Name:      "get_platform_info",
+		Arguments: map[string]any{},
+	})
+	if callErr != nil {
+		return DoctorResult{}, doctorError(doctorContext, parsed.Host, callErr)
+	}
+	if verification == nil || verification.IsError {
+		return DoctorResult{}, doctorError(doctorContext, parsed.Host, errors.New("platform verification failed"))
+	}
+	output := verification.StructuredContent
+	if output == nil {
+		output = verification.Content
+	}
+	result.Status = DoctorStatusVerified
+	result.Verification = &VerificationResult{Tool: "get_platform_info", Output: output}
 	return result, nil
 }
 
