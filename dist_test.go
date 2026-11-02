@@ -128,26 +128,45 @@ func TestReleaseArtifactsIgnoreGitMetadata(t *testing.T) {
 		t.Skip("distribution script requires bash")
 	}
 
-	worktreeRoot, err := os.Getwd()
+	callerRoot, err := os.Getwd()
 	if err != nil {
-		t.Fatalf("get worktree root: %v", err)
+		t.Fatalf("get caller root: %v", err)
 	}
-	tempRepo := filepath.Join(t.TempDir(), "independent-repo")
-	copyTrackedRepository(t, worktreeRoot, tempRepo)
-	initializeIndependentRepository(t, tempRepo)
+	workspace := t.TempDir()
+	sourceRoot := filepath.Join(workspace, "source-without-git")
+	copySourceTree(t, callerRoot, sourceRoot)
+	if _, err := os.Lstat(filepath.Join(sourceRoot, ".git")); !os.IsNotExist(err) {
+		t.Fatalf("source fixture unexpectedly contains .git: %v", err)
+	}
+	binSentinel := filepath.Join(sourceRoot, "bin", "caller-sentinel")
+	distSentinel := filepath.Join(sourceRoot, "dist", "caller-sentinel")
+	writeSentinel(t, binSentinel)
+	writeSentinel(t, distSentinel)
+	defer assertSentinel(t, binSentinel)
+	defer assertSentinel(t, distSentinel)
 
-	for _, root := range []string{worktreeRoot, tempRepo} {
-		runReleaseCommand(t, root, "make", "build")
-		runReleaseCommand(t, root, "make", "dist")
+	firstRepo := filepath.Join(workspace, "git-context-a")
+	secondRepo := filepath.Join(workspace, "git-context-b")
+	copySourceTree(t, sourceRoot, firstRepo)
+	copySourceTree(t, sourceRoot, secondRepo)
+	firstRevision := initializeIndependentRepository(t, firstRepo, "2001-01-01T00:00:00Z", "release context a")
+	secondRevision := initializeIndependentRepository(t, secondRepo, "2002-02-02T00:00:00Z", "release context b")
+	if firstRevision == secondRevision {
+		t.Fatalf("Git fixture revisions unexpectedly match: %s", firstRevision)
 	}
 
-	worktreeBinary := readTestFile(t, filepath.Join(worktreeRoot, "bin", "erp-skill"))
-	tempRepoBinary := readTestFile(t, filepath.Join(tempRepo, "bin", "erp-skill"))
-	if !bytes.Equal(worktreeBinary, tempRepoBinary) {
+	runReleaseCommand(t, firstRepo, "UTC", "make", "build")
+	runReleaseCommand(t, firstRepo, "UTC", "make", "dist")
+	runReleaseCommand(t, secondRepo, "Asia/Kuala_Lumpur", "make", "build")
+	runReleaseCommand(t, secondRepo, "Asia/Kuala_Lumpur", "make", "dist")
+
+	firstBinary := readTestFile(t, filepath.Join(firstRepo, "bin", "erp-skill"))
+	secondBinary := readTestFile(t, filepath.Join(secondRepo, "bin", "erp-skill"))
+	if !bytes.Equal(firstBinary, secondBinary) {
 		t.Error("make build binary differs across Git contexts")
 	}
-	assertNoVCSBuildInfo(t, "worktree make build binary", worktreeBinary)
-	assertNoVCSBuildInfo(t, "independent repo make build binary", tempRepoBinary)
+	assertNoVCSBuildInfo(t, "Git context A make build binary", firstBinary)
+	assertNoVCSBuildInfo(t, "Git context B make build binary", secondBinary)
 
 	archiveNames := []string{
 		fmt.Sprintf("erp-agent-skill_%s_darwin_amd64.tar.gz", Version),
@@ -157,75 +176,106 @@ func TestReleaseArtifactsIgnoreGitMetadata(t *testing.T) {
 		fmt.Sprintf("erp-agent-skill_%s_windows_amd64.zip", Version),
 	}
 	for _, name := range archiveNames {
-		worktreeArchive := readTestFile(t, filepath.Join(worktreeRoot, "dist", name))
-		tempRepoArchive := readTestFile(t, filepath.Join(tempRepo, "dist", name))
-		worktreeArchiveBinary := readArchiveBinary(t, name, worktreeArchive)
-		tempRepoArchiveBinary := readArchiveBinary(t, name, tempRepoArchive)
-		if !bytes.Equal(worktreeArchiveBinary, tempRepoArchiveBinary) {
+		firstArchive := readTestFile(t, filepath.Join(firstRepo, "dist", name))
+		secondArchive := readTestFile(t, filepath.Join(secondRepo, "dist", name))
+		firstArchiveBinary := readArchiveBinary(t, name, firstArchive)
+		secondArchiveBinary := readArchiveBinary(t, name, secondArchive)
+		if !bytes.Equal(firstArchiveBinary, secondArchiveBinary) {
 			t.Errorf("%s binary differs across Git contexts", name)
 		}
-		if !bytes.Equal(worktreeArchive, tempRepoArchive) {
+		if !bytes.Equal(firstArchive, secondArchive) {
 			t.Errorf("%s differs across Git contexts", name)
 		}
-		assertNoVCSBuildInfo(t, "worktree "+name+" binary", worktreeArchiveBinary)
-		assertNoVCSBuildInfo(t, "independent repo "+name+" binary", tempRepoArchiveBinary)
+		assertNoVCSBuildInfo(t, "Git context A "+name+" binary", firstArchiveBinary)
+		assertNoVCSBuildInfo(t, "Git context B "+name+" binary", secondArchiveBinary)
 	}
 
-	worktreeChecksums := readTestFile(t, filepath.Join(worktreeRoot, "dist", "checksums.txt"))
-	tempRepoChecksums := readTestFile(t, filepath.Join(tempRepo, "dist", "checksums.txt"))
-	if !bytes.Equal(worktreeChecksums, tempRepoChecksums) {
+	firstChecksums := readTestFile(t, filepath.Join(firstRepo, "dist", "checksums.txt"))
+	secondChecksums := readTestFile(t, filepath.Join(secondRepo, "dist", "checksums.txt"))
+	if !bytes.Equal(firstChecksums, secondChecksums) {
 		t.Error("checksums.txt differs across Git contexts")
 	}
 }
 
-func copyTrackedRepository(t *testing.T, sourceRoot, destinationRoot string) {
+func copySourceTree(t *testing.T, sourceRoot, destinationRoot string) {
 	t.Helper()
-	command := exec.Command("git", "ls-files", "-z")
-	command.Dir = sourceRoot
-	output, err := command.Output()
-	if err != nil {
-		t.Fatalf("list tracked files: %v", err)
-	}
-	for _, relativePath := range strings.Split(string(output), "\x00") {
-		if relativePath == "" {
-			continue
+	err := filepath.Walk(sourceRoot, func(sourcePath string, info os.FileInfo, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
 		}
-		sourcePath := filepath.Join(sourceRoot, relativePath)
-		destinationPath := filepath.Join(destinationRoot, relativePath)
-		info, err := os.Lstat(sourcePath)
+		relativePath, err := filepath.Rel(sourceRoot, sourcePath)
 		if err != nil {
-			t.Fatalf("inspect tracked file %s: %v", relativePath, err)
+			return err
 		}
-		if err := os.MkdirAll(filepath.Dir(destinationPath), 0o755); err != nil {
-			t.Fatalf("create parent for %s: %v", relativePath, err)
+		if relativePath == "." {
+			return os.MkdirAll(destinationRoot, info.Mode().Perm())
+		}
+		firstComponent := strings.Split(relativePath, string(os.PathSeparator))[0]
+		if firstComponent == ".git" || firstComponent == "bin" || firstComponent == "dist" {
+			if info.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+
+		destinationPath := filepath.Join(destinationRoot, relativePath)
+		if info.IsDir() {
+			return os.MkdirAll(destinationPath, info.Mode().Perm())
 		}
 		if info.Mode()&os.ModeSymlink != 0 {
 			target, err := os.Readlink(sourcePath)
 			if err != nil {
-				t.Fatalf("read symlink %s: %v", relativePath, err)
+				return err
 			}
-			if err := os.Symlink(target, destinationPath); err != nil {
-				t.Fatalf("copy symlink %s: %v", relativePath, err)
-			}
-			continue
+			return os.Symlink(target, destinationPath)
 		}
-		content := readTestFile(t, sourcePath)
-		if err := os.WriteFile(destinationPath, content, info.Mode().Perm()); err != nil {
-			t.Fatalf("copy tracked file %s: %v", relativePath, err)
+		if !info.Mode().IsRegular() {
+			return fmt.Errorf("unsupported source entry %s", relativePath)
 		}
+		content, err := os.ReadFile(sourcePath)
+		if err != nil {
+			return err
+		}
+		return os.WriteFile(destinationPath, content, info.Mode().Perm())
+	})
+	if err != nil {
+		t.Fatalf("copy source tree: %v", err)
 	}
 }
 
-func initializeIndependentRepository(t *testing.T, root string) {
+func writeSentinel(t *testing.T, path string) {
+	t.Helper()
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatalf("create sentinel directory: %v", err)
+	}
+	if err := os.WriteFile(path, []byte("caller output must remain untouched\n"), 0o644); err != nil {
+		t.Fatalf("write sentinel: %v", err)
+	}
+}
+
+func assertSentinel(t *testing.T, path string) {
+	t.Helper()
+	content, err := os.ReadFile(path)
+	if err != nil {
+		t.Errorf("read sentinel %s: %v", path, err)
+		return
+	}
+	if string(content) != "caller output must remain untouched\n" {
+		t.Errorf("sentinel %s was modified", path)
+	}
+}
+
+func initializeIndependentRepository(t *testing.T, root, commitDate, message string) string {
 	t.Helper()
 	runGitCommand(t, root, nil, "init", "-q")
 	runGitCommand(t, root, nil, "config", "user.name", "Release Test")
 	runGitCommand(t, root, nil, "config", "user.email", "release-test@example.invalid")
 	runGitCommand(t, root, nil, "add", "--all")
 	runGitCommand(t, root, []string{
-		"GIT_AUTHOR_DATE=2001-01-01T00:00:00Z",
-		"GIT_COMMITTER_DATE=2001-01-01T00:00:00Z",
-	}, "-c", "commit.gpgsign=false", "-c", "core.hooksPath=/dev/null", "commit", "-q", "-m", "independent release context")
+		"GIT_AUTHOR_DATE=" + commitDate,
+		"GIT_COMMITTER_DATE=" + commitDate,
+	}, "-c", "commit.gpgsign=false", "-c", "core.hooksPath=/dev/null", "commit", "-q", "-m", message)
+	return strings.TrimSpace(runGitCommandOutput(t, root, "rev-parse", "HEAD"))
 }
 
 func runGitCommand(t *testing.T, root string, extraEnv []string, args ...string) {
@@ -238,11 +288,22 @@ func runGitCommand(t *testing.T, root string, extraEnv []string, args ...string)
 	}
 }
 
-func runReleaseCommand(t *testing.T, root, name string, args ...string) {
+func runGitCommandOutput(t *testing.T, root string, args ...string) string {
+	t.Helper()
+	command := exec.Command("git", args...)
+	command.Dir = root
+	output, err := command.CombinedOutput()
+	if err != nil {
+		t.Fatalf("git %s in %s: %v\n%s", strings.Join(args, " "), root, err, output)
+	}
+	return string(output)
+}
+
+func runReleaseCommand(t *testing.T, root, timezone, name string, args ...string) {
 	t.Helper()
 	command := exec.Command(name, args...)
 	command.Dir = root
-	command.Env = append(os.Environ(), "LC_ALL=C", "LANG=C", "TZ=UTC")
+	command.Env = append(os.Environ(), "LC_ALL=C", "LANG=C", "TZ="+timezone)
 	if output, err := command.CombinedOutput(); err != nil {
 		t.Fatalf("run %s %s in %s: %v\n%s", name, strings.Join(args, " "), root, err, output)
 	}
