@@ -277,6 +277,37 @@ func TestDoctorJSONStatusesDoNotLeakCredential(t *testing.T) {
 	})
 }
 
+func TestDoctorRejectsAmbiguousRedactedOutput(t *testing.T) {
+	const sentinel = "recognizable-collision-key"
+	endpoint := "https://erp.example.com/mcp"
+	for iteration := 0; iteration < 32; iteration++ {
+		app, stdout, credentials, _, _, _ := newTestApp(t)
+		stderr := app.Err.(*bytes.Buffer)
+		credentials.values = map[string]string{"codex|" + endpoint: sentinel}
+		app.Doctor = fakeDoctor{result: mcpclient.DoctorResult{
+			Status:        mcpclient.DoctorStatusVerified,
+			ServerName:    "erp-open-platform",
+			ServerVersion: "1.2.3",
+			Tools:         []string{"get_platform_info"},
+			Verification: &mcpclient.VerificationResult{Tool: "get_platform_info", Output: map[string]any{
+				"credential-" + sentinel: "secret-derived key",
+				"credential-[REDACTED]":  "literal key",
+			}},
+		}}
+
+		runErr := app.Run(t.Context(), []string{"doctor", "codex", "--url", endpoint})
+		if runErr == nil || runErr.Error() != "doctor output contains ambiguous redacted object keys" {
+			t.Fatalf("iteration %d doctor error = %v, want stable ambiguous-key error", iteration, runErr)
+		}
+		if stdout.Len() != 0 {
+			t.Fatalf("iteration %d doctor stdout = %q, want empty", iteration, stdout.String())
+		}
+		if strings.Contains(stderr.String(), sentinel) || strings.Contains(runErr.Error(), sentinel) {
+			t.Fatalf("iteration %d doctor leaked credential: stderr=%q error=%q", iteration, stderr.String(), runErr)
+		}
+	}
+}
+
 func TestCLIRejectsLiteralKeyAndRedactsFailures(t *testing.T) {
 	app, _, _, _, _, _ := newTestApp(t)
 	if err := app.Run(t.Context(), []string{"install", "codex", "--url", "https://erp.example.com/mcp", "--key", "literal-secret"}); err == nil || strings.Contains(err.Error(), "literal-secret") {

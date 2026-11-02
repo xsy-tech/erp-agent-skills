@@ -10,6 +10,8 @@ import (
 	"strings"
 )
 
+var errAmbiguousRedactedJSON = errors.New("doctor output contains ambiguous redacted object keys")
+
 func (a *App) runDoctor(ctx context.Context, args []string) error {
 	if len(args) == 0 {
 		return errors.New("doctor requires an agent")
@@ -59,31 +61,46 @@ func encodeRedactedJSON(writer io.Writer, value any, secret string) error {
 	if err := decoder.Decode(&payload); err != nil {
 		return redactError(err, secret)
 	}
+	redacted, err := redactJSONValue(payload, secret)
+	if err != nil {
+		return redactError(err, secret)
+	}
 	encoder := json.NewEncoder(writer)
 	encoder.SetIndent("", "  ")
-	return redactError(encoder.Encode(redactJSONValue(payload, secret)), secret)
+	return redactError(encoder.Encode(redacted), secret)
 }
 
-func redactJSONValue(value any, secret string) any {
+func redactJSONValue(value any, secret string) (any, error) {
 	if secret == "" {
-		return value
+		return value, nil
 	}
 	switch typed := value.(type) {
 	case string:
-		return strings.ReplaceAll(typed, secret, "[REDACTED]")
+		return strings.ReplaceAll(typed, secret, "[REDACTED]"), nil
 	case []any:
 		for index := range typed {
-			typed[index] = redactJSONValue(typed[index], secret)
+			redacted, err := redactJSONValue(typed[index], secret)
+			if err != nil {
+				return nil, err
+			}
+			typed[index] = redacted
 		}
-		return typed
+		return typed, nil
 	case map[string]any:
 		redacted := make(map[string]any, len(typed))
 		for key, item := range typed {
 			redactedKey := strings.ReplaceAll(key, secret, "[REDACTED]")
-			redacted[redactedKey] = redactJSONValue(item, secret)
+			if _, exists := redacted[redactedKey]; exists {
+				return nil, errAmbiguousRedactedJSON
+			}
+			redactedItem, err := redactJSONValue(item, secret)
+			if err != nil {
+				return nil, err
+			}
+			redacted[redactedKey] = redactedItem
 		}
-		return redacted
+		return redacted, nil
 	default:
-		return value
+		return value, nil
 	}
 }
