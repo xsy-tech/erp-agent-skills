@@ -17,20 +17,6 @@ targets=(
   windows/amd64
 )
 
-tar_version=$(tar --version 2>/dev/null || true)
-case "$tar_version" in
-  *bsdtar*)
-    tar_owner_options=(--uid 0 --gid 0 --uname root --gname root)
-    ;;
-  *"GNU tar"*)
-    tar_owner_options=(--owner=root --group=root)
-    ;;
-  *)
-    echo "unsupported tar implementation; bsdtar or GNU tar is required" >&2
-    exit 1
-    ;;
-esac
-
 for target in "${targets[@]}"; do
   os=${target%/*}
   arch=${target#*/}
@@ -46,27 +32,24 @@ for target in "${targets[@]}"; do
     CGO_ENABLED=0 GOOS="$os" GOARCH="$arch" go build -trimpath -o "$binary" ./cmd/erp-skill
   )
   cp "$root/README.md" "$root/LICENSE" "$root/manifest.json" "$package_dir/"
-  find "$package_dir" -exec touch -t 198001010000 {} +
   if [[ "$os" == "windows" ]]; then
-    (
-      cd "$stage"
-      zip -X -q "$dist/$name.zip" \
-        "$name/LICENSE" \
-        "$name/README.md" \
-        "$name/manifest.json" \
-        "$name/erp-skill.exe"
-    )
+    archive_format=zip
+    archive_path="$dist/$name.zip"
+    binary_name=erp-skill.exe
   else
-    (
-      cd "$stage"
-      COPYFILE_DISABLE=1 tar --format ustar "${tar_owner_options[@]}" -cf - \
-        "$name/LICENSE" \
-        "$name/README.md" \
-        "$name/manifest.json" \
-        "$name/erp-skill" \
-        | gzip -n > "$dist/$name.tar.gz"
-    )
+    archive_format=tar.gz
+    archive_path="$dist/$name.tar.gz"
+    binary_name=erp-skill
   fi
+  (
+    cd "$root"
+    go run ./cmd/distpack \
+      -format "$archive_format" \
+      -source "$package_dir" \
+      -output "$archive_path" \
+      -root "$name" \
+      -binary "$binary_name"
+  )
 done
 
 rm -rf "$stage"
