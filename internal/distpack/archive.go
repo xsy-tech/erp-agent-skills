@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	"unicode"
 )
 
 const (
@@ -80,6 +81,10 @@ func loadEntries(options Options) ([]archiveEntry, error) {
 	if !validArchiveName(options.BinaryName) {
 		return nil, fmt.Errorf("invalid binary name %q", options.BinaryName)
 	}
+	sourceDir, err := filepath.Abs(options.SourceDir)
+	if err != nil {
+		return nil, fmt.Errorf("resolve source directory: %w", err)
+	}
 
 	files := []struct {
 		name string
@@ -92,7 +97,11 @@ func loadEntries(options Options) ([]archiveEntry, error) {
 	}
 	entries := make([]archiveEntry, 0, len(files))
 	for _, file := range files {
-		data, err := os.ReadFile(filepath.Join(options.SourceDir, file.name))
+		sourcePath := filepath.Join(sourceDir, file.name)
+		if filepath.Dir(sourcePath) != sourceDir {
+			return nil, fmt.Errorf("source path %q is not directly under source directory", file.name)
+		}
+		data, err := os.ReadFile(sourcePath)
 		if err != nil {
 			return nil, fmt.Errorf("read %s: %w", file.name, err)
 		}
@@ -106,8 +115,25 @@ func loadEntries(options Options) ([]archiveEntry, error) {
 }
 
 func validArchiveName(name string) bool {
-	return name != "" && name != "." && path.Clean(name) == name &&
-		!strings.HasPrefix(name, "/") && !strings.Contains(name, "\\")
+	if name == "" || name == "." || name == ".." ||
+		filepath.IsAbs(name) || filepath.VolumeName(name) != "" ||
+		strings.ContainsAny(name, `/\`) || hasWindowsDrivePrefix(name) {
+		return false
+	}
+	for _, character := range name {
+		if unicode.IsControl(character) {
+			return false
+		}
+	}
+	return true
+}
+
+func hasWindowsDrivePrefix(name string) bool {
+	if len(name) < 2 || name[1] != ':' {
+		return false
+	}
+	letter := name[0]
+	return letter >= 'A' && letter <= 'Z' || letter >= 'a' && letter <= 'z'
 }
 
 func writeTarGzip(output io.Writer, entries []archiveEntry) error {
