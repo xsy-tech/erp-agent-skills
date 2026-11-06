@@ -19,6 +19,26 @@ make build
 make dist
 ```
 
+## GitHub Release
+
+```bash
+make release-check          # Test, vet, build all five platforms, verify SHA-256
+gh auth login              # One-time GitHub CLI authentication
+make release               # Publish the version defined in version.go
+# Or explicitly assert the expected version:
+make release VERSION=0.1.1
+```
+
+Commit and push the release source before `make release`. It requires a clean
+working tree, verifies that the exact commit exists in GitHub, and refuses an
+existing version tag. It uploads the five archives and `checksums.txt` to a draft,
+then publishes it after every upload succeeds. The version tag is created on
+GitHub automatically; no manual `git tag` is needed.
+
+The default repository is `xsy-tech/erp-agent-skills`; override it with
+`REPO=owner/repository`. Run `make help` for available commands and see
+[enterprise release](docs/enterprise-release.md) for version updates and recovery.
+
 ## Codex
 
 ```bash

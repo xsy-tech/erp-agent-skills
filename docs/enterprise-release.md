@@ -2,18 +2,43 @@
 
 ## Repository And Access
 
-Host this repository in the enterprise Codeup organization. Limit write and tag permissions to maintainers. Ordinary users install immutable release archives and should not need repository write access.
+Releases are published to `xsy-tech/erp-agent-skills` on GitHub by default. Limit write and tag permissions to maintainers. Ordinary users install immutable release archives and should not need repository write access.
 
 ## Release Procedure
 
-1. Run `make check`.
-2. Run `make dist`.
-3. Verify every archive against `dist/checksums.txt`.
-4. Review `git grep` output for credential patterns.
-5. Tag the reviewed commit and publish the archives and checksum file together.
+1. Update `version.go`, `manifest.json`, `scripts/install.sh`, and `scripts/install.ps1` together for a new version. `make check` checks their consistency.
+2. Run `make release-check`. This runs tests and `go vet`, builds all five platform archives, and verifies `dist/checksums.txt`. It does not contact GitHub or create tags/releases.
+3. Review the source and artifacts for credentials, then commit and push all release changes. Move or commit untracked files too; publishing requires a clean working tree.
+4. Install GitHub CLI (`gh`) and authenticate once with `gh auth login`, using an account with write access to the repository.
+5. Run `make release`, or `make release VERSION=0.1.1` to assert an expected version. The command repeats the local checks, verifies the commit exists in GitHub, uploads all assets to a draft Release, and then publishes it. GitHub creates `v<version>` pointing to that exact commit. No manual tag push is required.
 6. Pilot with a small user group before broad distribution.
 
-Prefer signed tags and CI-generated artifacts. Consumers must pin an explicit version and verify SHA-256 before installation.
+```bash
+make help
+make release-check
+make release VERSION=0.1.1
+# To publish a fork or another organization repository:
+make release REPO=owner/repository
+```
+
+`VERSION` is a guard, not a version override; it must match the source version.
+`REPO` defaults to `xsy-tech/erp-agent-skills`. The checked commit must already
+exist in that repository, and the version tag must not exist. Releases never
+overwrite existing tags or assets. `make release-check` can run with local edits;
+`make release` checks for changes both before and after building.
+
+Assets are four `.tar.gz` archives (`darwin/amd64`, `darwin/arm64`, `linux/amd64`,
+`linux/arm64`), one `.zip` archive (`windows/amd64`), and `checksums.txt`.
+Version strings containing `-` are marked as prereleases.
+
+If uploading fails, inspect the Releases page for an incomplete draft before
+retrying. If the final publication fails, the uploaded assets remain in a draft
+that can be reviewed and published on GitHub. The command prints recovery
+instructions and never automatically deletes drafts or existing tags.
+
+Consumers must pin an explicit version and verify SHA-256 before installation.
+For example, the Apple Silicon archive for `v0.1.1` is available after publication at
+`https://github.com/xsy-tech/erp-agent-skills/releases/download/v0.1.1/erp-agent-skill_0.1.1_darwin_arm64.tar.gz`.
 
 ## API Key Provisioning
 
