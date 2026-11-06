@@ -32,7 +32,7 @@ Both commands install into the current user's `~/.local/bin` without administrat
 
 Copy the relevant [installation prompt](https://github.com/xsy-tech/erp-agent-skills/blob/main/docs/agent-install-prompts.en.md) into Codex, Claude Code, or WorkBuddy. The prompts prefer prebuilt packages and require SHA-256 verification and truthful completion reporting.
 
-Do not paste your personal API Key into chat. Enter it through hidden terminal input for Codex / Claude Code, or through WorkBuddy's Token UI.
+Do not paste your personal API Key into chat. Use hidden terminal input for direct installation into all three clients. WorkBuddy's Token UI applies only to optional Connector packages.
 
 ## Connect Codex / Claude Code
 
@@ -67,11 +67,27 @@ Codex uses `$CODEX_HOME/config.toml` (default `~/.codex/config.toml`); Claude Co
 
 ## Connect WorkBuddy
 
+**v0.1.2 (not yet published) installs MCP and the Skill directly by default; no Connector-package import is required.** Published v0.1.1 supports only the optional Connector-export flow below.
+
+In Bash, enter the personal Key through hidden input and replace the MCP URL:
+
+```bash
+MCP_URL='https://erp-open.example.com/mcp'
+IFS= read -r -s -p 'Personal ERP API Key: ' ERP_INSTALL_KEY; printf '\n'
+printf '%s\n' "$ERP_INSTALL_KEY" | erp-skill install workbuddy --url "$MCP_URL" --key-stdin
+unset ERP_INSTALL_KEY
+erp-skill doctor workbuddy --url "$MCP_URL"
+```
+
+The installer updates erp-open in `~/.workbuddy/mcp.json` with the streamableHttp URL and Authorization header and installs the Skill into `~/.workbuddy/skills/erp-open-platform`. Restart WorkBuddy or reconnect the server and confirm the Skill is enabled. No launcher or separate Connector Token form is needed. Other MCP settings are preserved; the configuration contains the personal Key and uses Unix mode 0600.
+
+For optional Connector distribution instead of local installation:
+
 ```bash
 erp-skill install workbuddy --url https://erp-open.example.com/mcp --output ./erp-open-platform-connector
 ```
 
-Import the generated directory into WorkBuddy, enter your Key in its Token UI, and connect or reconnect MCP. Generated files retain `${ERP_OPEN_API_KEY}` as a placeholder. `doctor workbuddy` can check connectivity independently but does not import the connector or configure its Token. WorkBuddy does not use `erp-skill launch`.
+`--output` exports a package without a real Key; import it and fill in the Token through WorkBuddy. It cannot be combined with `--key-stdin`. See the [installation guide](https://github.com/xsy-tech/erp-agent-skills/blob/main/docs/installation.en.md#connect-workbuddy) for Windows input, migration, and removal.
 
 ## Use ERP tools
 

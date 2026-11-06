@@ -18,7 +18,7 @@ Obtain the MCP URL and a personal API Key bound to the correct ERP user and tena
 | Linux | ARM 64-bit | `erp-agent-skill_0.1.1_linux_arm64.tar.gz` |
 | Windows | x64 | `erp-agent-skill_0.1.1_windows_amd64.zip` |
 
-These packages contain the CLI; they are not directly importable WorkBuddy Connectors. Generate a Connector after installing the CLI.
+These packages contain the CLI; they are not directly importable WorkBuddy Connectors. The newer installer configures WorkBuddy MCP and Skill directly; generating a Connector is needed only for the optional distribution flow.
 
 ## One-command installation of the published version
 
@@ -186,32 +186,66 @@ Sources: [Codex MCP](https://developers.openai.com/codex/mcp/), [Codex configura
 
 ## Connect WorkBuddy
 
+### Default: install MCP and Skill directly (v0.1.2)
+
+This feature belongs to v0.1.2, which is not yet published. Published v0.1.1 exports Connectors only. Use a release containing this feature, or build the newer source before running these commands.
+
+In Bash (enter bash first if your shell is Zsh), replace the endpoint:
+
+```bash
+MCP_URL='https://erp-open.example.com/mcp'
+IFS= read -r -s -p 'Personal ERP API Key: ' ERP_INSTALL_KEY; printf '\n'
+printf '%s\n' "$ERP_INSTALL_KEY" | erp-skill install workbuddy --url "$MCP_URL" --key-stdin
+unset ERP_INSTALL_KEY
+erp-skill doctor workbuddy --url "$MCP_URL"
+```
+
+For Windows, use the PowerShell hidden-input block above with `$Agent = 'workbuddy'`. The install command remains `erp-skill install $Agent --url $McpUrl --key-stdin`; then run `erp-skill doctor workbuddy --url $McpUrl`.
+
+The installer performs read-only MCP checks and installs user-level configuration and Skill:
+
+| Item | Path or field |
+| --- | --- |
+| User MCP configuration | ~/.workbuddy/mcp.json; on Windows, %USERPROFILE%\.workbuddy\mcp.json |
+| ERP server | mcpServers.erp-open |
+| Transport | streamableHttp |
+| Credential | headers.Authorization containing Bearer <personal-Key> |
+| ERP Skill | ~/.workbuddy/skills/erp-open-platform/SKILL.md and bilingual references |
+
+Updates preserve unrelated servers, settings, and JSON numbers. Invalid existing configuration is rejected. The Key is saved only in private user configuration, never process arguments or chat; Unix mode is 0600. Direct installation needs no Connector import, Token form, or launcher.
+
+Restart WorkBuddy or reconnect erp-open in its custom MCP management UI and confirm the Skill is enabled. Check for same-named project-level MCP or Skill overrides if needed; the installer modifies only user-level files.
+
+Doctor reads the saved credential by default. Optional `--key-stdin` independently verifies a supplied Key without replacing the stored credential.
+
+### Optional: export a Connector
+
+Use this only to distribute a Connector with a Token form, icon, and Skill:
+
 ```bash
 erp-skill install workbuddy --url https://erp-open.example.com/mcp --output ./erp-open-platform-connector
 ```
 
-Import the generated directory through WorkBuddy's Connector UI, enter your personal Key in the Token UI, and connect or reconnect MCP. Generation does not need a Key; keep `${ERP_OPEN_API_KEY}` as a placeholder in files. WorkBuddy does not use `erp-skill launch`.
+Export creates files only, without registering local MCP, saving a Key, or installing a local Skill. It requires no Key and cannot be combined with --key-stdin. Files retain ${ERP_OPEN_API_KEY}; import through WorkBuddy and enter the Key in its Token form. Legacy v0.1.1 users can still use this flow.
 
-For an independent connectivity check, use hidden input as above and replace the install command with:
+### Migrate from an imported Connector
 
-```bash
-printf '%s\n' "$ERP_INSTALL_KEY" | erp-skill doctor workbuddy --url "$MCP_URL" --key-stdin
-```
+Disable the old ERP Connector first and keep its files. Avoid connecting both that Connector and the new erp-open registration, which would duplicate tools. Install and verify with the newer CLI, restart WorkBuddy, and inspect the MCP and Skill. Remove the old Connector through the UI after confirming the new connection works. The installer does not delete imported Connectors.
 
-Then run `unset ERP_INSTALL_KEY`. In PowerShell, replace `install $Agent` with `doctor workbuddy` in the hidden-input block. This does not configure the WorkBuddy Token UI.
+The [official WorkBuddy MCP guide](https://www.codebuddy.cn/docs/workbuddy/From-Beginner-to-Expert-Guide/Function-Description/MCP-Guide) describes user configuration paths. File installation and protocol checks do not constitute actual WorkBuddy UI acceptance testing.
 
 ## Upgrade, roll back, or uninstall
 
 Select an already published target version, reinstall the matching CLI archive using its script and checksum manifest, then check `erp-skill version`.
 
-An updated Skill can conflict with files already on disk. Back up local changes, inspect them, and add `--force` to the secure `install` command only after deciding to replace them. For WorkBuddy, regenerate the Connector with `--force` after confirming replacement, then reimport it.
+An updated Skill can conflict with files already on disk. Back up local changes, inspect them, and add `--force` to the secure `install` command only after deciding to replace them. For direct WorkBuddy installation, rerun the secure install command with --force after backup and confirmation. Only the optional Connector flow requires regeneration and reimport.
 
 ```bash
 erp-skill uninstall codex --url https://erp-open.example.com/mcp
 erp-skill uninstall claude-code --url https://erp-open.example.com/mcp
 ```
 
-Remove WorkBuddy Connectors and Tokens through its UI. Once no client uses the CLI, remove `~/.local/bin/erp-skill` or the Windows executable manually. Local removal does not revoke a server-side Key; ask an administrator to revoke or rotate compromised credentials.
+For direct installation, run `erp-skill uninstall workbuddy --url <real-MCP-URL>` to remove the local ERP credential and unchanged managed Skill while preserving other settings. Optional Connectors and Tokens are still removed through WorkBuddy’s UI. Once no client uses the CLI, remove `~/.local/bin/erp-skill` or the Windows executable manually. Local removal does not revoke a server-side Key; ask an administrator to revoke or rotate compromised credentials.
 
 ## Troubleshooting
 
@@ -226,6 +260,6 @@ Remove WorkBuddy Connectors and Tokens through its UI. Once no client uses the C
 | INSTALLED_AUTHORIZATION_REQUIRED | Ask an administrator to authorize read-only get_platform_info. |
 | Direct client startup cannot call ERP | Confirm migration and restart, run doctor, check Key validity, and check for project-level overrides. |
 | Added tools are missing | Reconnect MCP or start a new session and inspect tools/list. |
-| Only a WorkBuddy directory was generated | Complete Connector import, Token configuration, and connection in WorkBuddy. |
+| Only a WorkBuddy directory was generated | You selected optional --output export; omit --output and use --key-stdin for direct installation. |
 
 See [installation prompts](agent-install-prompts.en.md), [agent usage](agent-usage.en.md), and [error handling](../references/errors.en.md).

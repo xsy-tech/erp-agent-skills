@@ -11,8 +11,8 @@ import (
 )
 
 func (a *App) runUninstall(ctx context.Context, args []string) error {
-	if len(args) == 0 || (args[0] != "codex" && args[0] != "claude-code") {
-		return errors.New("uninstall requires codex or claude-code")
+	if len(args) == 0 || (args[0] != "codex" && args[0] != "claude-code" && args[0] != "workbuddy") {
+		return errors.New("uninstall requires codex, claude-code, or workbuddy")
 	}
 	agent := args[0]
 	flags := flag.NewFlagSet("uninstall "+agent, flag.ContinueOnError)
@@ -29,9 +29,11 @@ func (a *App) runUninstall(ctx context.Context, args []string) error {
 	}
 	// New installs use private client configuration. Remove a legacy keyring
 	// entry when it is available, without making new installs depend on keyrings.
-	if _, err := a.Credentials.Get(agent, *endpoint); err == nil {
-		if err := a.Credentials.Delete(agent, *endpoint); err != nil {
-			return err
+	if agent != "workbuddy" {
+		if _, err := a.Credentials.Get(agent, *endpoint); err == nil {
+			if err := a.Credentials.Delete(agent, *endpoint); err != nil {
+				return err
+			}
 		}
 	}
 	return a.Profiles.Delete(agent)

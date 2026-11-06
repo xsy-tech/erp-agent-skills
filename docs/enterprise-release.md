@@ -76,7 +76,7 @@ https://github.com/xsy-tech/erp-agent-skills/releases/download/v0.1.1/erp-agent-
 
 按用户和环境分别签发 Key，绑定正确的 ERP 用户、租户与最小必需能力，不要多人共用或将 Key 打进 Connector 包。
 
-新版 Codex / Claude Code 安装将 Key 持久化到当前用户的私有 MCP 配置，Unix 文件权限为 0600；不得将这些文件打进制品、提交仓库或放进共享项目配置。安装器不通过进程参数传递 Key，新安装无需系统凭证管理器。旧钥匙串记录仅用于兼容读取；WorkBuddy 仍在客户端 Token 界面填写 Key。
+新版 Codex / Claude Code / WorkBuddy 直接安装将 Key 持久化到当前用户的私有 MCP 配置，Unix 文件权限为 0600；不得将这些文件打进制品、提交仓库或放进共享项目配置。安装器不通过进程参数传递 Key，新安装无需系统凭证管理器。旧钥匙串记录仅用于兼容读取；WorkBuddy 只有可选 Connector 方式在 Token 表单填写 Key，默认直接安装写入用户级私有 mcp.json。
 
 开放平台记录 Client、API Key 标识、绑定用户、租户、Capability、协议、请求 ID、结果与耗时。发布维护者保留制品校验值、Tag/提交、推广分组和回退记录；日志和支持材料不得包含 Key 明文。
 

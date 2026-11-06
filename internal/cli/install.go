@@ -17,10 +17,7 @@ func (a *App) runInstall(ctx context.Context, args []string) error {
 		return errors.New("install requires an agent")
 	}
 	agent := args[0]
-	if agent == "workbuddy" {
-		return a.installWorkBuddy(args[1:])
-	}
-	if agent != "codex" && agent != "claude-code" {
+	if agent != "codex" && agent != "claude-code" && agent != "workbuddy" {
 		return fmt.Errorf("unsupported agent %q", agent)
 	}
 	flags := flag.NewFlagSet("install "+agent, flag.ContinueOnError)
@@ -28,11 +25,25 @@ func (a *App) runInstall(ctx context.Context, args []string) error {
 	endpoint := flags.String("url", "", "MCP endpoint")
 	keyStdin := flags.Bool("key-stdin", false, "read API key from stdin")
 	force := flags.Bool("force", false, "overwrite managed files")
+	var output string
+	if agent == "workbuddy" {
+		flags.StringVar(&output, "output", "", "export an optional Connector directory instead of installing locally")
+	}
 	if err := flags.Parse(args[1:]); err != nil {
 		return errors.New("invalid install arguments")
 	}
 	if flags.NArg() != 0 || strings.TrimSpace(*endpoint) == "" {
 		return errors.New("install requires --url")
+	}
+	if output != "" {
+		if *keyStdin {
+			return errors.New("Connector export does not accept --key-stdin; omit --output to install WorkBuddy directly")
+		}
+		if err := workbuddy.Generate(output, *endpoint, *force); err != nil {
+			return err
+		}
+		fmt.Fprintf(a.Out, "已导出可选 Connector / Exported optional Connector: %s\n", output)
+		return nil
 	}
 	if !*keyStdin {
 		return errors.New("install requires --key-stdin; literal key arguments are not supported")
@@ -63,25 +74,6 @@ func (a *App) runInstall(ctx context.Context, args []string) error {
 		return redactError(err, secret)
 	}
 	fmt.Fprintf(a.Out, "installed %s integration for %s\n", agent, *endpoint)
-	fmt.Fprintln(a.Out, "重启客户端后可直接使用 / Restart your client, then use codex, claude, or its local desktop Code session directly.")
-	return nil
-}
-
-func (a *App) installWorkBuddy(args []string) error {
-	flags := flag.NewFlagSet("install workbuddy", flag.ContinueOnError)
-	flags.SetOutput(io.Discard)
-	endpoint := flags.String("url", "", "MCP endpoint")
-	output := flags.String("output", "", "connector output directory")
-	force := flags.Bool("force", false, "overwrite managed files")
-	if err := flags.Parse(args); err != nil {
-		return errors.New("invalid WorkBuddy install arguments")
-	}
-	if flags.NArg() != 0 || strings.TrimSpace(*endpoint) == "" || strings.TrimSpace(*output) == "" {
-		return errors.New("WorkBuddy install requires --url and --output")
-	}
-	if err := workbuddy.Generate(*output, *endpoint, *force); err != nil {
-		return err
-	}
-	fmt.Fprintf(a.Out, "generated WorkBuddy connector at %s\n", *output)
+	fmt.Fprintln(a.Out, "重启客户端后可直接使用 / Restart your client, then use Codex, Claude Code, or WorkBuddy normally.")
 	return nil
 }

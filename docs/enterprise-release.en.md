@@ -73,7 +73,7 @@ Document persistent user-level authentication as the newer installer’s default
 
 Issue separate Keys per user and environment, bound to the correct ERP identity, tenant, and minimum capabilities. Do not share Keys or embed them in Connector packages.
 
-New Codex / Claude Code installations persist the Key in private user-level MCP configuration with Unix mode 0600. Never package these files, commit them, or store them in shared project configuration. The installer does not pass Keys through process arguments, and new installations need no OS keyring. Existing keyring entries are read only for compatibility. WorkBuddy users still enter Keys in its Token UI.
+New Codex / Claude Code / WorkBuddy direct installations persist the Key in private user-level MCP configuration with Unix mode 0600. Never package these files, commit them, or store them in shared project configuration. The installer does not pass Keys through process arguments, and new installations need no OS keyring. Existing keyring entries are read only for compatibility. WorkBuddy uses its Token UI only for optional Connector packages; default direct installation writes private user mcp.json.
 
 ERP Open Platform audits Client, Key identifier, bound user, tenant, capability, protocol, request ID, outcome, and duration. Maintainers retain checksums, tag/commit identity, rollout groups, and rollback records. Logs and support material must not contain Key secrets.
 

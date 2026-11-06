@@ -92,12 +92,12 @@ Install, verify, and launch ERP Open Platform agent integrations.
 Installation saves user-level MCP authentication; restart and use your client normally.
 
 命令 / Commands:
-  install codex|claude-code --url URL --key-stdin [--force]
+  install codex|claude-code|workbuddy --url URL --key-stdin [--force]
   install workbuddy --url URL --output DIRECTORY [--force]
-  doctor codex|claude-code --url URL
-  doctor workbuddy --url URL --key-stdin
+  doctor codex|claude-code|workbuddy --url URL
+  doctor workbuddy --url URL --key-stdin (可选独立检查 / optional independent check)
   launch codex|claude-code [-- agent arguments]
-  uninstall codex|claude-code --url URL
+  uninstall codex|claude-code|workbuddy --url URL
   version`)
 }
 
@@ -143,7 +143,7 @@ func (a *App) clientConfig() installer.ClientConfig {
 
 func (a *App) storedCredential(agent, endpoint string) (string, error) {
 	secret, err := a.clientConfig().Credential(agent, endpoint)
-	if errors.Is(err, installer.ErrConfigCredentialNotFound) {
+	if errors.Is(err, installer.ErrConfigCredentialNotFound) && agent != "workbuddy" {
 		return a.Credentials.Get(agent, endpoint)
 	}
 	return secret, err

@@ -51,30 +51,34 @@ MCP URL: https://erp-open.example.com/mcp (ask me to replace this placeholder be
 
 ## WorkBuddy
 
+Direct installation requires v0.1.2 (not yet published), rather than legacy v0.1.1. Prefer a published prebuilt release containing this feature; source builds are an explicit alternative before publication.
+
 ```text
-Prepare an ERP Agent Skill Connector for WorkBuddy for the current user, then guide me through importing it.
+Install ERP MCP and the ERP Skill directly for the current WorkBuddy user. Do not require Connector-package import.
 
 Official repository: https://github.com/xsy-tech/erp-agent-skills
-Release: v0.1.1
-MCP URL: https://erp-open.example.com/mcp (ask me to replace this placeholder before execution)
+Target: v0.1.2 or later with WorkBuddy direct installation. Check whether it has actually been published before downloading; do not silently substitute v0.1.1, which exports Connectors only.
+MCP URL: https://erp-open.example.com/mcp (ask me to replace the placeholder before execution)
 
-1. Check OS, architecture, terminal permission, and network access. Prefer prebuilt Release packages over source compilation.
-2. Download the matching archive and checksums.txt from https://github.com/xsy-tech/erp-agent-skills/releases/tag/v0.1.1, verify SHA-256, install erp-skill, configure PATH, and confirm version 0.1.1.
-3. Run:
-   erp-skill install workbuddy --url <real-MCP-URL> --output ./erp-open-platform-connector
-   Report the absolute output directory. Explain conflicts and let me back up and confirm before --force.
-4. Generation requires no personal Key. Do not ask for a Key in chat or write a literal Key into JSON. Preserve ${ERP_OPEN_API_KEY}.
-5. Guide me to import the generated directory in WorkBuddy's Connector UI, enter the Key in its Token UI, and connect or reconnect MCP. The downloaded CLI archive is not itself an importable Connector.
-6. Explicitly list manual UI steps if the current client cannot perform them. Do not use erp-skill launch workbuddy; it is unsupported.
-7. If I want independent CLI connectivity verification, provide hidden-input code for erp-skill doctor workbuddy --url <real-MCP-URL> --key-stdin. Explain that it does not populate WorkBuddy's Token UI.
-8. Report the executable version, Connector path, actual check results, and UI connection status. A generated directory alone is not verified integration.
+1. Check OS, architecture, terminal/network access, and the installed WorkBuddy client. Prefer a published prebuilt package and checksums.txt; verify SHA-256 and erp-skill version. If unavailable, report that accurately; do not install Go or compile by default.
+2. Do not request a Key in chat. Provide local hidden-input code that pipes it to:
+   erp-skill install workbuddy --url <real-MCP-URL> --key-stdin
+   Do not add --output or require a Connector Token form for this mode.
+3. The installer updates erp-open in ~/.workbuddy/mcp.json using streamableHttp and headers.Authorization, and installs ~/.workbuddy/skills/erp-open-platform. This is private user configuration containing a Key; never put it in a shared project, repository, or chat, and do not print its contents.
+4. Preserve unrelated MCP servers/settings. Explain Skill conflicts and let me back up and confirm before --force.
+5. Run erp-skill doctor workbuddy --url <real-MCP-URL> using the saved credential and read-only verification. Add --key-stdin only when I explicitly want an independent check of another Key.
+6. If an old ERP Connector is enabled, guide me to disable it to avoid duplicate tools. Do not automatically delete it.
+7. Tell me to restart WorkBuddy or reconnect erp-open in its MCP UI and confirm the Skill is enabled. Do not use erp-skill launch workbuddy.
+8. Report version, paths, actual doctor status, and remaining reconnect steps. File installation and protocol checks are not actual WorkBuddy UI acceptance testing.
 ```
+
+For optional package distribution, use `erp-skill install workbuddy --url <MCP-URL> --output ./erp-open-platform-connector`. Export accepts no Key and does not register local MCP or install a local Skill; import the package and fill its Token form instead. Choose one flow.
 
 ## Completion criteria
 
 - The executable version matches the selected release.
 - Codex / Claude Code installation succeeds, `doctor` reports its actual result, and the client restarts using the installed version’s authentication flow: direct startup for the newer installer, or the legacy launcher for v0.1.1.
-- WorkBuddy has a generated Connector, completed UI import, configured Token, and an active MCP connection. Standalone `doctor` only verifies the endpoint and Key supplied to it.
+- WorkBuddy direct installation writes user MCP configuration and Skill, verifies the saved credential with doctor, and requires client reconnection to confirm MCP/Skill availability. Optional Connector export separately needs UI import and Token configuration.
 - `INSTALLED_AUTHORIZATION_REQUIRED` is not equivalent to full `VERIFIED` status.
 
 See the [installation guide](installation.en.md) for complete hidden-input commands and the distinction between initialization, installation, and authenticated startup.

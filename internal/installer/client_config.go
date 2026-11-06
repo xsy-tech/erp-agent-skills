@@ -46,6 +46,8 @@ func (c ClientConfig) Path(agent string) (string, error) {
 			home = c.ClaudeConfigDir
 		}
 		return filepath.Join(home, ".claude.json"), nil
+	case "workbuddy":
+		return filepath.Join(c.HomeDir, ".workbuddy", "mcp.json"), nil
 	default:
 		return "", errors.New("unsupported MCP configuration client")
 	}
@@ -66,6 +68,9 @@ func (c ClientConfig) Register(agent, endpoint, secret string) error {
 			server["http_headers"] = headers
 		} else {
 			server["type"] = "http"
+			if agent == "workbuddy" {
+				server["type"] = "streamableHttp"
+			}
 			server["headers"] = headers
 		}
 		servers["erp-open"] = server

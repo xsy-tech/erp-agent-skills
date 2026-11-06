@@ -40,7 +40,7 @@ MCP `initialize` 是握手，不会自动安装 Skill。执行 `erp-skill instal
 
 `doctor` 优先读取同一份持久化凭证；`erp-skill launch` 仅保留为兼容入口。新安装不再要求系统钥匙串或 Secret Service。旧 v0.1.1 尚未包含此改动，仍需其原有启动流程，升级后重新安装集成即可迁移。详见[直接启动说明](installation.md#直接运行-codex-或-claude)。普通 Claude 桌面聊天客户端和云端会话不属于同一个配置入口。
 
-WorkBuddy 需要导入生成的 Connector，在其 Token 界面填写个人 Key 并连接 MCP。它不使用 `erp-skill launch`，仅生成 Connector 目录也不代表已经连接成功。
+WorkBuddy 的 v0.1.2（待发布）默认直接安装到 `~/.workbuddy/mcp.json` 和 `~/.workbuddy/skills/erp-open-platform`，保存鉴权后重启或重连即可，不使用 `erp-skill launch`。Connector 仅为带 `--output` 的可选导出方式，导出后才需界面导入及 Token 配置；旧 v0.1.1 仍只有导出模式。
 
 ## 验证结果说明
 
@@ -57,7 +57,9 @@ WorkBuddy 需要导入生成的 Connector，在其 Token 界面填写个人 Key 
 
 - 截至 2026-10-30，Codex CLI `0.163.0` 的 MCP 注册/移除命令和本地适配器测试在 macOS 上完成。
 - 同期 Claude Code `2.1.304` 完成对应命令与适配器测试。
-- WorkBuddy Connector 使用 Token 模式，声明最低版本 `4.23.0`；当时实现环境没有安装 WorkBuddy，尚未完成客户端实际导入测试。
+- 可选 WorkBuddy Connector 使用 Token 模式，声明最低版本 `4.23.0`；尚未完成客户端实际导入测试。
 - Release 支持 macOS arm64/amd64、Linux arm64/amd64、Windows amd64 的交叉编译。交叉编译成功不等于在 Windows、Linux 或 WorkBuddy 中完成原生安装验证。
 
 问题排查见[安装指南](installation.md#常见问题)和[错误处理](../references/errors.md)。
+
+WorkBuddy 直接安装的配置保留、凭证轮换、卸载和本地 HTTP MCP 协议检查已有自动验证；这与实际桌面 UI 中的重新连接、Skill 发现和调用验收不同，未完成 UI 实测时不得宣称已在桌面验证通过。

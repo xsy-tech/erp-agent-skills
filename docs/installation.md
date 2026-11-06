@@ -18,7 +18,7 @@
 | Linux | ARM 64 位 | `erp-agent-skill_0.1.1_linux_arm64.tar.gz` |
 | Windows | x64 | `erp-agent-skill_0.1.1_windows_amd64.zip` |
 
-这些都是 `erp-skill` 工具包，**不是 WorkBuddy 可直接导入的 Connector**。WorkBuddy 还需运行下文的生成命令。
+这些都是 `erp-skill` 工具包，**不是 WorkBuddy 可直接导入的 Connector**。新版 WorkBuddy 推荐直接安装 MCP + Skill；只有选择 Connector 分发方式时才需要生成目录。
 
 ## 一键安装已发布版本
 
@@ -188,31 +188,61 @@ Skill 当前安装到 `$CODEX_HOME/skills/erp-open-platform`（默认 `~/.codex/
 
 ## 连接 WorkBuddy
 
+### 默认：直接安装 MCP + Skill（v0.1.2）
+
+本功能属于待发布的 v0.1.2；当前已发布的 v0.1.1 只有 Connector 导出功能。请使用包含此改动的新版安装器，或从新版源码构建后执行以下命令。
+
+Bash（Zsh 用户先执行 `bash`），将地址换成实际端点：
+
+```bash
+MCP_URL='https://erp-open.example.com/mcp'
+IFS= read -r -s -p '请输入个人 ERP API Key：' ERP_INSTALL_KEY; printf '\n'
+printf '%s\n' "$ERP_INSTALL_KEY" | erp-skill install workbuddy --url "$MCP_URL" --key-stdin
+unset ERP_INSTALL_KEY
+erp-skill doctor workbuddy --url "$MCP_URL"
+```
+
+Windows 使用上文 PowerShell 隐藏输入代码，将 `$Agent` 设为 `'workbuddy'` 即可；安装命令仍为 `erp-skill install $Agent --url $McpUrl --key-stdin`，之后执行 `erp-skill doctor workbuddy --url $McpUrl`。
+
+安装器先进行只读 MCP 验证，再保存当前用户的 MCP 配置和共享 Skill：
+
+| 内容 | 路径或字段 |
+| --- | --- |
+| 用户级 MCP 配置 | `~/.workbuddy/mcp.json`（Windows 为 `%USERPROFILE%\.workbuddy\mcp.json`） |
+| ERP 条目 | `mcpServers.erp-open` |
+| 传输类型 | `streamableHttp` |
+| 凭证 | `headers.Authorization`，值为 `Bearer <个人Key>` |
+| ERP Skill | `~/.workbuddy/skills/erp-open-platform/SKILL.md` 及中英文 references |
+
+更新会保留其他 MCP、设置和 JSON 数值；无效配置会拒绝覆盖。Key 仅保存到用户级私有配置，不通过进程参数或聊天传递；Unix 权限为 `0600`。直接安装无需 Connector 包、Token 表单或 `erp-skill launch`。
+
+完成后重启 WorkBuddy 或在“自定义连接器 / MCP”界面重连 `erp-open`，确认 ERP Skill 已启用。若当前项目存在同名项目级 MCP 配置或 Skill，需核对其优先级；安装器只处理用户级配置，不修改项目文件。
+
+`doctor workbuddy --url ...` 默认读取已保存的 Key；保留 `--key-stdin` 作为独立检查方式，它只检查本次输入的 Key，不会覆盖已保存的凭证。
+
+### 可选：导出 Connector 包
+
+仅在需要分发带有 Token 表单、图标和 Skill 的 Connector 时使用：
+
 ```bash
 erp-skill install workbuddy --url https://erp-open.example.com/mcp --output ./erp-open-platform-connector
 ```
 
-1. 在 WorkBuddy 的 Connector 导入入口选择生成的 `erp-open-platform-connector` 目录。
-2. 在 Token 输入界面填写个人 API Key。
-3. 连接或重连 MCP，并检查可用工具。
+该命令只生成目录，不写本机 WorkBuddy MCP、Key 或 Skill。它不需要 Key，不能同时传 `--key-stdin`。文件保留 `${ERP_OPEN_API_KEY}` 占位符；在 WorkBuddy 导入后由 Token 表单保存凭证。旧 v0.1.1 用户仍可使用这条路径。
 
-生成过程不需要提供 API Key，文件中只保留 `${ERP_OPEN_API_KEY}` 占位符。不要手工将真实 Key 替换进 JSON。WorkBuddy 不使用 `erp-skill launch`。
+### 从 Connector 迁移到直接安装
 
-需要独立检查连通性时，可将前述安全输入示例中的安装命令改为：
+先在 WorkBuddy 中停用旧 ERP Connector，保留其文件；不要让旧 Connector 和新的 `erp-open` 同时连接，避免重复工具。使用新版安装器直接安装并验证，再重启 WorkBuddy、检查 MCP 和 Skill；确认新连接工作后，可在界面移除旧 Connector。安装器不会擅自删除已导入的 Connector。
 
-```bash
-printf '%s\n' "$ERP_INSTALL_KEY" | erp-skill doctor workbuddy --url "$MCP_URL" --key-stdin
-```
-
-检查完成后运行 `unset ERP_INSTALL_KEY`。PowerShell 同样可将安全输入示例中的 `install $Agent` 改为 `doctor workbuddy`。这一步不会配置 WorkBuddy 界面的 Token。
+[WorkBuddy 官方 MCP 指南](https://www.codebuddy.cn/docs/workbuddy/From-Beginner-to-Expert-Guide/Function-Description/MCP-Guide)说明用户级路径和配置方式。文件写入及协议验证与 WorkBuddy 实际界面验收是不同层次，安装器成功不表示已完成 UI 实测。
 
 ## 升级、回退与卸载
 
 升级或回退：选择目标的已发布版本，使用对应脚本、安装包和校验清单重新安装 `erp-skill`，再检查 `erp-skill version`。
 
-Codex / Claude Code 的 Skill 内容变化时，安装器会拒绝覆盖内容不同的已有文件。先备份自己修改过的 Skill；确认要替换后，按上述安全输入方式，在 `install` 命令末尾添加 `--force`。WorkBuddy 同理，确认后可为重新生成 Connector 的命令添加 `--force`，再重新导入。
+三个客户端直接安装的 Skill 内容变化时，安装器会拒绝覆盖内容不同的已有文件。先备份自己修改过的 Skill；确认要替换后，按上述安全输入方式，在 `install` 命令末尾添加 `--force`。只有使用可选 Connector 分发方式时，才为重新生成命令添加 `--force` 并重新导入。
 
-Codex / Claude Code 可卸载当前端点的集成：
+三个客户端均可卸载直接安装的集成，例如：
 
 ```bash
 erp-skill uninstall codex --url https://erp-open.example.com/mcp
@@ -220,7 +250,7 @@ erp-skill uninstall codex --url https://erp-open.example.com/mcp
 erp-skill uninstall claude-code --url https://erp-open.example.com/mcp
 ```
 
-WorkBuddy 请在其界面移除 Connector 和 Token。确认所有客户端都不再使用工具后，可以手动移除 `~/.local/bin/erp-skill` 或 Windows 对应的 `erp-skill.exe`。本地卸载不会吊销服务端 API Key；丢失设备或怀疑凭证泄露时，应联系管理员吊销或轮换。
+直接安装的 WorkBuddy 使用 `erp-skill uninstall workbuddy --url <实际MCP地址>`，移除本地 ERP MCP 凭证和未修改的托管 Skill，保留其他配置。可选 Connector 仍在 WorkBuddy 界面移除及清理 Token。确认所有客户端都不再使用工具后，可以手动移除 `~/.local/bin/erp-skill` 或 Windows 对应的 `erp-skill.exe`。本地卸载不会吊销服务端 API Key；丢失设备或怀疑凭证泄露时，应联系管理员吊销或轮换。
 
 ## 常见问题
 
@@ -235,6 +265,6 @@ WorkBuddy 请在其界面移除 Connector 和 Token。确认所有客户端都�
 | `INSTALLED_AUTHORIZATION_REQUIRED` | 初始化和工具发现成功，但缺少只读的 `get_platform_info` 授权，请联系管理员。 |
 | 直接启动客户端但调用失败 | 确认已用新版安装器重新安装并重启客户端，运行 doctor 检查实际结果，核对 Key 是否有效以及配置是否被项目级设置覆盖。 |
 | Agent 看不到新增工具 | 重连 MCP 或正常重启客户端；以 `tools/list` 为准。 |
-| WorkBuddy 只生成了目录 | 还需在客户端导入 Connector、填写 Token 并连接，不能据此认定安装已验证。 |
+| WorkBuddy 只生成了目录 | 使用了可选的 --output 导出模式；要直接安装，应省略 --output，改用 --key-stdin。 |
 
 另见[安装提示词](agent-install-prompts.md)、[Agent 使用说明](agent-usage.md)及[错误处理](../references/errors.md)。

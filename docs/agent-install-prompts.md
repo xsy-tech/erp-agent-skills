@@ -57,31 +57,35 @@ MCP 地址：https://erp-open.example.com/mcp（执行前请让我替换成真�
 
 ## WorkBuddy 安装提示词
 
+以下直接安装流程需要 v0.1.2（待发布），不能使用旧 v0.1.1 安装包代替。新版本发布前可从新版源码构建后执行；普通用户应优先等待或下载包含本功能的正式 Release。
+
 ```text
-请为当前用户准备 ERP Agent Skill 的 WorkBuddy Connector，并指导我完成导入。
+请为当前用户直接安装 ERP MCP 和 ERP Skill 到 WorkBuddy，不要求导入 Connector 包。
 
 官方仓库：https://github.com/xsy-tech/erp-agent-skills
-目标发布版本：v0.1.1
+目标版本：包含 WorkBuddy 直接安装的 v0.1.2 或后续版本；执行前核对该版本是否已经发布，不能声称不存在的包已下载。不要静默回退到仅导出 Connector 的 v0.1.1。
 MCP 地址：https://erp-open.example.com/mcp（执行前请让我替换成真实地址）
 
 请执行：
-1. 检查操作系统、处理器架构，以及是否有终端和网络权限。优先使用 Release 预编译包，不要默认从源码编译。
-2. 从 https://github.com/xsy-tech/erp-agent-skills/releases/tag/v0.1.1 下载匹配的安装包和 checksums.txt，核对 SHA-256 后安装 erp-skill，设置 PATH 并核对版本为 0.1.1。
-3. 运行：
-   erp-skill install workbuddy --url <真实MCP地址> --output ./erp-open-platform-connector
-   告诉我生成目录的绝对路径；如果目录已有修改，先说明并让我备份确认，不要直接 --force。
-4. 生成 Connector 不需要个人 API Key。不要在聊天里询问 Key，也不要把真实 Key 写进 JSON；保留 ${ERP_OPEN_API_KEY} 占位符。
-5. 指导我在 WorkBuddy 的 Connector 导入入口导入生成目录，再在 Token 界面输入个人 API Key，然后连接或重连 MCP。Release 中的 ZIP / tar.gz 是命令行工具包，不能代替生成的 Connector 目录直接导入。
-6. 如果当前客户端不能自动完成导入或 Token 输入，请明确列出我需要操作的步骤。不要尝试 erp-skill launch workbuddy，这个命令不受支持。
-7. 如果我需要独立的命令行连通性检查，给出本机隐藏输入 Key 并通过标准输入执行 erp-skill doctor workbuddy --url <真实MCP地址> --key-stdin 的代码；说明这不会替我设置 WorkBuddy 的 Token。
-8. 用中文报告二进制版本、Connector 路径、实际检查结果及导入/连接状态；只生成目录不能视作已验证成功。
+1. 检查系统、处理器、终端和网络权限，以及 WorkBuddy 是否已安装。优先下载已发布版本的预编译包和 checksums.txt，核对 SHA-256 和 erp-skill version；如果目标版本尚未发布，说明实际情况，不要默认安装 Go 或从源码编译。
+2. 不在聊天中询问 API Key。给我本机终端隐藏输入代码，通过标准输入运行：
+   erp-skill install workbuddy --url <真实MCP地址> --key-stdin
+   此模式不要加 --output，也不需要我填写 Connector Token 表单。
+3. 安装器会更新 ~/.workbuddy/mcp.json 的 erp-open，使用 type=streamableHttp 和 headers.Authorization 保存鉴权，并安装 ~/.workbuddy/skills/erp-open-platform。配置是含个人 Key 的用户级私有文件，不得写到共享项目配置、仓库或聊天，不得展示完整内容。
+4. 如遇 Skill 冲突，先说明并让我备份确认，再考虑 --force。不要删除其他 MCP 或修改 WorkBuddy 的其他设置。
+5. 运行 erp-skill doctor workbuddy --url <真实MCP地址>，读取保存的 Key 做只读验证。无需再次 --key-stdin，除非我明确需要独立检查另一把 Key。
+6. 如已启用旧的 ERP Connector，先指导我停用，避免与新 erp-open 重复暴露工具；不要自动删除旧 Connector。
+7. 告诉我重启 WorkBuddy 或在自定义 MCP 页面重连 erp-open，确认 ERP Skill 启用。不要使用 erp-skill launch workbuddy。
+8. 用中文报告版本、安装路径、实际 doctor 状态及待完成的重连步骤。文件写入和协议检查成功不能当作 WorkBuddy 界面实际验收成功。
 ```
+
+如确实需要 Connector 包分发，可使用 `erp-skill install workbuddy --url <MCP地址> --output ./erp-open-platform-connector`。此模式不接收 Key、不配置本机 MCP，也不安装本机 Skill；导入后由 Token 表单处理凭证。它与默认直接安装二选一。
 
 ## 如何判断完成
 
 - `erp-skill version` 与选定发布版本一致。
 - Codex / Claude Code：安装器成功，`doctor` 返回真实检查结果，并按所用版本重启客户端；新版可直接使用，旧 v0.1.1 使用 launch。
-- WorkBuddy：已生成 Connector，完成界面导入、Token 配置及 MCP 连接。独立 `doctor` 检查只能证明其使用的地址和 Key 的连通性。
+- WorkBuddy 默认直接安装：用户级 MCP 和 Skill 已写入，doctor 使用保存的凭证完成只读验证，客户端重连后确认 MCP 和 Skill 可用。可选 Connector 导出模式另需界面导入和 Token 配置。
 - `INSTALLED_AUTHORIZATION_REQUIRED` 需要管理员补充授权，不能等同于完整的 `VERIFIED`。
 
 手动安装和安全输入的完整命令见[安装指南](installation.md)。

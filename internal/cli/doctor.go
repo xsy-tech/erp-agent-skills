@@ -29,10 +29,7 @@ func (a *App) runDoctor(ctx context.Context, args []string) error {
 	}
 	var secret string
 	var err error
-	if agent == "workbuddy" {
-		if !*keyStdin {
-			return errors.New("WorkBuddy doctor requires --key-stdin")
-		}
+	if agent == "workbuddy" && *keyStdin {
 		secret, err = readSecret(a.In)
 	} else {
 		if *keyStdin {

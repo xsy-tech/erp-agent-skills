@@ -101,6 +101,8 @@ func skillDirectory(agent, homeDir, codexHome string, claudeConfigDir ...string)
 			return filepath.Join(claudeConfigDir[0], "skills", "erp-open-platform"), nil
 		}
 		return filepath.Join(homeDir, ".claude", "skills", "erp-open-platform"), nil
+	case "workbuddy":
+		return filepath.Join(homeDir, ".workbuddy", "skills", "erp-open-platform"), nil
 	default:
 		return "", fmt.Errorf("unsupported local agent %q", agent)
 	}

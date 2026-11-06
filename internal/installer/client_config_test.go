@@ -11,7 +11,7 @@ import (
 )
 
 func TestPersistentClientConfigLifecycle(t *testing.T) {
-	for _, agent := range []string{"codex", "claude-code"} {
+	for _, agent := range []string{"codex", "claude-code", "workbuddy"} {
 		t.Run(agent, func(t *testing.T) {
 			config := ClientConfig{HomeDir: t.TempDir()}
 			path, _ := config.Path(agent)
@@ -57,7 +57,7 @@ func TestPersistentClientConfigLifecycle(t *testing.T) {
 }
 
 func TestPersistentClientConfigRejectsInvalidFilesWithoutDisclosure(t *testing.T) {
-	for _, agent := range []string{"codex", "claude-code"} {
+	for _, agent := range []string{"codex", "claude-code", "workbuddy"} {
 		t.Run(agent, func(t *testing.T) {
 			config := ClientConfig{HomeDir: t.TempDir()}
 			path, _ := config.Path(agent)

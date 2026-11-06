@@ -13,10 +13,13 @@ import (
 )
 
 func TestInstallPersistsDesktopReadyMCPWithoutCommandLineSecrets(t *testing.T) {
-	for _, agent := range []string{"codex", "claude-code"} {
+	for _, agent := range []string{"codex", "claude-code", "workbuddy"} {
 		t.Run(agent, func(t *testing.T) {
 			app, stdout, _, _, commands, _ := newTestApp(t)
 			path := filepath.Join(app.HomeDir, ".claude.json")
+			if agent == "workbuddy" {
+				path = filepath.Join(app.HomeDir, ".workbuddy", "mcp.json")
+			}
 			baseline := `{"theme":"dark","largeId":9007199254740993,"mcpServers":{"other":{"type":"http","url":"https://other.invalid"}}}`
 			if agent == "codex" {
 				path = filepath.Join(app.CodexHome, "config.toml")
@@ -66,6 +69,9 @@ func TestInstallPersistsDesktopReadyMCPWithoutCommandLineSecrets(t *testing.T) {
 				if server["url"] != endpoint || headers["Authorization"] != "Bearer "+secret {
 					t.Fatal("persistent MCP authentication does not match installed credential")
 				}
+				if agent == "workbuddy" && server["type"] != "streamableHttp" {
+					t.Fatal("WorkBuddy must use its documented streamableHttp transport")
+				}
 				if bytes.Contains(data, []byte("ERP_OPEN_CODEX_KEY")) || bytes.Contains(data, []byte("ERP_OPEN_CLAUDE_KEY")) {
 					t.Fatal("configuration still requires a launcher environment variable")
 				}
@@ -77,6 +83,61 @@ func TestInstallPersistsDesktopReadyMCPWithoutCommandLineSecrets(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestWorkBuddyDirectInstallDoctorAndUninstall(t *testing.T) {
+	app, stdout, credentials, profiles, _, _ := newTestApp(t)
+	endpoint := "https://erp.invalid/mcp"
+	app.In = strings.NewReader("workbuddy-private-test-key\n")
+	if err := app.Run(t.Context(), []string{"install", "workbuddy", "--url", endpoint, "--key-stdin"}); err != nil {
+		t.Fatal(err)
+	}
+	skill := filepath.Join(app.HomeDir, ".workbuddy", "skills", "erp-open-platform", "SKILL.md")
+	if _, err := os.Stat(skill); err != nil {
+		t.Fatal("direct installation did not install the WorkBuddy Skill")
+	}
+	if len(credentials.values) != 0 || profiles.values["workbuddy"] != endpoint {
+		t.Fatal("direct installation should save the profile without requiring a keyring")
+	}
+	stdout.Reset()
+	app.In = strings.NewReader("")
+	if err := app.Run(t.Context(), []string{"doctor", "workbuddy", "--url", endpoint}); err != nil {
+		t.Fatal("doctor could not use the saved WorkBuddy credential:", err)
+	}
+	if !strings.Contains(stdout.String(), "VERIFIED") || strings.Contains(stdout.String(), "workbuddy-private-test-key") {
+		t.Fatal("doctor did not report verification safely")
+	}
+	if err := app.Run(t.Context(), []string{"uninstall", "workbuddy", "--url", endpoint}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(skill); !os.IsNotExist(err) {
+		t.Fatal("uninstall left the managed WorkBuddy Skill")
+	}
+	if _, err := app.clientConfig().Credential("workbuddy", endpoint); err == nil {
+		t.Fatal("uninstall left the WorkBuddy credential")
+	}
+	if _, ok := profiles.values["workbuddy"]; ok {
+		t.Fatal("uninstall left the endpoint profile")
+	}
+}
+
+func TestWorkBuddyConnectorExportRemainsOptionalAndContainsNoCredential(t *testing.T) {
+	app, _, _, profiles, _, _ := newTestApp(t)
+	output := filepath.Join(t.TempDir(), "connector")
+	args := []string{"install", "workbuddy", "--url", "https://erp.invalid/mcp", "--output", output}
+	if err := app.Run(t.Context(), args); err != nil {
+		t.Fatal(err)
+	}
+	data, err := os.ReadFile(filepath.Join(output, "mcp.json"))
+	if err != nil || !bytes.Contains(data, []byte("${ERP_OPEN_API_KEY}")) {
+		t.Fatal("connector export must retain its Token placeholder")
+	}
+	if _, err := os.Stat(filepath.Join(app.HomeDir, ".workbuddy", "mcp.json")); !os.IsNotExist(err) || len(profiles.values) != 0 {
+		t.Fatal("connector export unexpectedly installed a local integration")
+	}
+	if err := app.Run(t.Context(), append(args, "--key-stdin")); err == nil {
+		t.Fatal("export must not silently ignore a supplied credential")
 	}
 }
 

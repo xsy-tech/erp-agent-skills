@@ -34,7 +34,7 @@ $ErrorActionPreference = 'Stop'; & ([scriptblock]::Create((Invoke-WebRequest -Us
 
 复制[安装提示词](https://github.com/xsy-tech/erp-agent-skills/blob/main/docs/agent-install-prompts.md)中对应的一段，发送给 **Codex、Claude Code 或 WorkBuddy**。提示词会引导 Agent 优先安装预编译包，并检查版本、配置和验证结果。
 
-**不要把个人 API Key 粘贴到聊天中。** Codex / Claude Code 在本机终端隐藏输入；WorkBuddy 在 Token 界面填写。
+**不要把个人 API Key 粘贴到聊天中。** 三个客户端的直接安装都在本机终端隐藏输入；只有可选 Connector 方式在 WorkBuddy Token 界面填写。
 
 ## 连接 Codex / Claude Code
 
@@ -68,11 +68,27 @@ Codex 配置位于 `$CODEX_HOME/config.toml`（默认 `~/.codex/config.toml`）�
 
 ## 连接 WorkBuddy
 
+**v0.1.2（待发布）默认直接安装 MCP 和 Skill，无需导入 Connector 包。** 已发布的 v0.1.1 只支持下方可选的 Connector 导出方式。
+
+在 Bash 中隐藏输入个人 Key（地址替换为实际 MCP 地址）：
+
+```bash
+MCP_URL='https://erp-open.example.com/mcp'
+IFS= read -r -s -p '请输入个人 ERP API Key：' ERP_INSTALL_KEY; printf '\n'
+printf '%s\n' "$ERP_INSTALL_KEY" | erp-skill install workbuddy --url "$MCP_URL" --key-stdin
+unset ERP_INSTALL_KEY
+erp-skill doctor workbuddy --url "$MCP_URL"
+```
+
+安装器更新 `~/.workbuddy/mcp.json` 中的 `erp-open`，写入 `streamableHttp` 地址和 `Authorization`；Skill 安装到 `~/.workbuddy/skills/erp-open-platform`。重启 WorkBuddy 或重连该 MCP，并确认 Skill 已启用即可；无需 `launch` 或单独填写 Connector Token 表单。其他 MCP 和设置会保留，配置包含个人 Key，Unix 文件权限为 `0600`。
+
+若需分发 Connector 而非直接安装，保留旧命令：
+
 ```bash
 erp-skill install workbuddy --url https://erp-open.example.com/mcp --output ./erp-open-platform-connector
 ```
 
-在 WorkBuddy 的 Connector 导入入口选择生成的目录，并在 **Token 输入界面**填写个人 API Key，然后连接或重连 MCP。生成的文件只包含 `${ERP_OPEN_API_KEY}` 占位符。`doctor workbuddy` 是可选的独立连通性检查，不会替你保存 Token 或完成界面导入。
+`--output` 只导出无真实 Key 的 Connector，需在 WorkBuddy 导入并填写 Token；不能同时使用 `--key-stdin`。详细的 Windows 安全输入、迁移和卸载见[安装指南](https://github.com/xsy-tech/erp-agent-skills/blob/main/docs/installation.md#连接-workbuddy)。
 
 ## 如何使用
 

@@ -36,7 +36,7 @@ The newer installer saves the URL and Authorization credential in private user-l
 
 Doctor reads the same persistent credential first; erp-skill launch remains a compatibility option. New installations do not require an OS keyring or Secret Service. Published v0.1.1 does not contain this change and still needs its original launcher flow; reinstall the integration after upgrading to migrate. See the [startup guide](installation.en.md#starting-codex-or-claude-directly). Ordinary Claude Desktop chat and cloud sessions have different configuration entry points.
 
-WorkBuddy requires importing the generated Connector, entering the Key in its Token UI, and connecting MCP. It does not use `launch`; generating a directory alone is not a completed connection.
+WorkBuddy v0.1.2 (not yet published) installs directly into ~/.workbuddy/mcp.json and ~/.workbuddy/skills/erp-open-platform. Restart or reconnect after credentials are saved; no launcher is needed. Connector export is optional with --output and separately requires UI import and Token setup. Legacy v0.1.1 supports export only.
 
 ## Verification results
 
@@ -53,7 +53,9 @@ These are historical test records, not a claim that every latest client version 
 
 - As of 2026-10-30, Codex CLI `0.163.0` MCP add/remove syntax and local adapter tests passed on macOS.
 - Claude Code `2.1.304` had corresponding command and adapter checks at that time.
-- WorkBuddy's Connector uses Token mode and declares minimum version `4.23.0`; WorkBuddy was not installed in that implementation environment, so UI import was not verified there.
+- The optional WorkBuddy Connector uses Token mode and declares minimum version `4.23.0`; UI import has not been verified.
 - Releases are cross-compiled for macOS arm64/amd64, Linux arm64/amd64, and Windows amd64. Cross-compilation does not prove native Windows, Linux, or WorkBuddy installation.
 
 See [troubleshooting](installation.en.md#troubleshooting) and [error handling](../references/errors.en.md).
+
+WorkBuddy direct-install configuration preservation, Key rotation, uninstall, and local HTTP MCP protocol checks have automated coverage. These do not prove desktop UI reconnection, Skill discovery, or actual WorkBuddy tool use; report UI validation separately.
