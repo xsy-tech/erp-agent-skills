@@ -2,21 +2,21 @@
 
 中文 | [English](installation.en.md)
 
-> v0.1.2 支持持久化鉴权：安装后重启客户端即可正常使用。旧 v0.1.1 用户请升级后重新安装集成；无需替换已有 Release 资产。
+> v0.1.3 支持持久化鉴权：安装后重启客户端即可正常使用。旧 v0.1.1 用户请升级后重新安装集成；无需替换已有 Release 资产。
 
 ## 选择安装方式
 
 普通用户优先使用 [GitHub Release](https://github.com/xsy-tech/erp-agent-skills/releases) 的安装包。安装 `erp-skill` 不需要 Go、GitHub CLI、仓库写权限或源码编译。它是 Agent 适配器安装与启动工具，不能代替 Codex、Claude Code 或 WorkBuddy 客户端。
 
-准备好目标客户端、管理员提供的 MCP 地址，以及绑定到你本人 ERP 用户和租户的个人 API Key。v0.1.2 安装器将 Codex / Claude Code / WorkBuddy 的鉴权写入当前用户的私有 MCP 配置，不再要求系统钥匙串或 Linux Secret Service。旧安装的系统凭证仅作为兼容读取来源。
+准备好目标客户端、管理员提供的 MCP 地址，以及绑定到你本人 ERP 用户和租户的个人 API Key。v0.1.3 安装器将 Codex / Claude Code / WorkBuddy 的鉴权写入当前用户的私有 MCP 配置，不再要求系统钥匙串或 Linux Secret Service。旧安装的系统凭证仅作为兼容读取来源。
 
-| 操作系统 | 处理器 | v0.1.2 安装包 |
+| 操作系统 | 处理器 | v0.1.3 安装包 |
 | --- | --- | --- |
-| macOS | Intel | `erp-agent-skill_0.1.2_darwin_amd64.tar.gz` |
-| macOS | Apple Silicon | `erp-agent-skill_0.1.2_darwin_arm64.tar.gz` |
-| Linux | Intel / AMD 64 位 | `erp-agent-skill_0.1.2_linux_amd64.tar.gz` |
-| Linux | ARM 64 位 | `erp-agent-skill_0.1.2_linux_arm64.tar.gz` |
-| Windows | x64 | `erp-agent-skill_0.1.2_windows_amd64.zip` |
+| macOS | Intel | `erp-agent-skill_0.1.3_darwin_amd64.tar.gz` |
+| macOS | Apple Silicon | `erp-agent-skill_0.1.3_darwin_arm64.tar.gz` |
+| Linux | Intel / AMD 64 位 | `erp-agent-skill_0.1.3_linux_amd64.tar.gz` |
+| Linux | ARM 64 位 | `erp-agent-skill_0.1.3_linux_arm64.tar.gz` |
+| Windows | x64 | `erp-agent-skill_0.1.3_windows_amd64.zip` |
 
 这些都是 `erp-skill` 工具包，**不是 WorkBuddy 可直接导入的 Connector**。新版 WorkBuddy 推荐直接安装 MCP + Skill；只有选择 Connector 分发方式时才需要生成目录。
 
@@ -27,7 +27,7 @@
 在 Bash / Zsh 终端执行：
 
 ```bash
-set -o pipefail && curl -fsSL https://raw.githubusercontent.com/xsy-tech/erp-agent-skills/v0.1.2/scripts/install.sh | ERP_SKILL_RELEASE_BASE_URL=https://github.com/xsy-tech/erp-agent-skills/releases/download/v0.1.2 bash && export PATH="$HOME/.local/bin:$PATH" && erp-skill version
+set -o pipefail && curl -fsSL https://raw.githubusercontent.com/xsy-tech/erp-agent-skills/v0.1.3/scripts/install.sh | ERP_SKILL_RELEASE_BASE_URL=https://github.com/xsy-tech/erp-agent-skills/releases/download/v0.1.3 bash && export PATH="$HOME/.local/bin:$PATH" && erp-skill version
 ```
 
 脚本自动识别系统和架构，下载对应安装包与 `checksums.txt`，校验通过后才安装。需要 Bash、`curl`、`tar`，以及 `sha256sum` 或 `shasum` 中的任意一种。
@@ -43,7 +43,7 @@ export PATH="$HOME/.local/bin:$PATH"
 在 PowerShell 中执行：
 
 ```powershell
-$ErrorActionPreference = 'Stop'; & ([scriptblock]::Create((Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/xsy-tech/erp-agent-skills/v0.1.2/scripts/install.ps1').Content)) -Version '0.1.2' -BaseUrl 'https://github.com/xsy-tech/erp-agent-skills/releases/download/v0.1.2'; $env:Path = "$HOME\.local\bin;$env:Path"; erp-skill version
+$ErrorActionPreference = 'Stop'; & ([scriptblock]::Create((Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/xsy-tech/erp-agent-skills/v0.1.3/scripts/install.ps1').Content)) -Version '0.1.3' -BaseUrl 'https://github.com/xsy-tech/erp-agent-skills/releases/download/v0.1.3'; $env:Path = "$HOME\.local\bin;$env:Path"; erp-skill version
 ```
 
 脚本会下载 ZIP、核对 SHA-256，再安装到 `$HOME\.local\bin`。如需永久使用，可在 Windows“编辑账户的环境变量”中，将这个目录加入用户 `Path`，然后重开终端。
@@ -55,26 +55,26 @@ $ErrorActionPreference = 'Stop'; & ([scriptblock]::Create((Invoke-WebRequest -Us
 ```bash
 bash scripts/install.sh
 # 显式固定发布版本：
-ERP_SKILL_VERSION=0.1.2 bash scripts/install.sh
+ERP_SKILL_VERSION=0.1.3 bash scripts/install.sh
 # 使用组织自己的下载镜像和安装目录：
-ERP_SKILL_VERSION=0.1.2 ERP_SKILL_RELEASE_BASE_URL=https://downloads.example.com/erp/v0.1.2 ERP_SKILL_INSTALL_DIR="$HOME/.local/bin" bash scripts/install.sh
+ERP_SKILL_VERSION=0.1.3 ERP_SKILL_RELEASE_BASE_URL=https://downloads.example.com/erp/v0.1.3 ERP_SKILL_INSTALL_DIR="$HOME/.local/bin" bash scripts/install.sh
 ```
 
 ```powershell
 & .\scripts\install.ps1
-& .\scripts\install.ps1 -Version '0.1.2' -BaseUrl 'https://downloads.example.com/erp/v0.1.2' -InstallDir "$HOME\.local\bin"
+& .\scripts\install.ps1 -Version '0.1.3' -BaseUrl 'https://downloads.example.com/erp/v0.1.3' -InstallDir "$HOME\.local\bin"
 ```
 
 所有示例地址中的 `example.com` 都是占位符。版本号与镜像内安装包、校验清单必须一致。
 
 ## 手动安装预编译包
 
-如果不方便运行一键脚本，可在 [v0.1.2 的 Assets](https://github.com/xsy-tech/erp-agent-skills/releases/tag/v0.1.2) 下载匹配平台的包和 `checksums.txt`。
+如果不方便运行一键脚本，可在 [v0.1.3 的 Assets](https://github.com/xsy-tech/erp-agent-skills/releases/tag/v0.1.3) 下载匹配平台的包和 `checksums.txt`。
 
 macOS / Linux 先核对清单中对应文件的 SHA-256。macOS 示例：
 
 ```bash
-shasum -a 256 erp-agent-skill_0.1.2_darwin_arm64.tar.gz
+shasum -a 256 erp-agent-skill_0.1.3_darwin_arm64.tar.gz
 ```
 
 Linux 可运行 `sha256sum <安装包文件名>`。不要对只下载了一个平台包的目录直接执行整个 `checksums.txt` 的批量校验，因为清单还包含其他平台的文件。
@@ -82,9 +82,9 @@ Linux 可运行 `sha256sum <安装包文件名>`。不要对只下载了一个�
 确认哈希一致后解压，以下以 Apple Silicon 为例：
 
 ```bash
-tar -xzf erp-agent-skill_0.1.2_darwin_arm64.tar.gz
+tar -xzf erp-agent-skill_0.1.3_darwin_arm64.tar.gz
 mkdir -p "$HOME/.local/bin"
-install -m 0755 erp-agent-skill_0.1.2_darwin_arm64/erp-skill "$HOME/.local/bin/erp-skill"
+install -m 0755 erp-agent-skill_0.1.3_darwin_arm64/erp-skill "$HOME/.local/bin/erp-skill"
 export PATH="$HOME/.local/bin:$PATH"
 erp-skill version
 ```
@@ -188,9 +188,9 @@ Skill 当前安装到 `$CODEX_HOME/skills/erp-open-platform`（默认 `~/.codex/
 
 ## 连接 WorkBuddy
 
-### 默认：直接安装 MCP + Skill（v0.1.2）
+### 默认：直接安装 MCP + Skill（v0.1.3）
 
-本功能从 v0.1.2 起提供；旧 v0.1.1 只有 Connector 导出功能。请先安装本页的 v0.1.2 预编译包，再执行以下命令。
+本功能从 v0.1.2 起提供；旧 v0.1.1 只有 Connector 导出功能。请先安装本页的 v0.1.3 预编译包，再执行以下命令。
 
 Bash（Zsh 用户先执行 `bash`），将地址换成实际端点：
 
@@ -259,7 +259,7 @@ erp-skill uninstall claude-code --url https://erp-open.example.com/mcp
 | `erp-skill` 命令不存在 | 将安装目录加入 PATH，或使用可执行文件的完整路径。 |
 | 下载 404 | 核对版本、平台、文件名和镜像地址；只有正式上传的 Assets 才可下载。 |
 | SHA-256 校验失败 | 停止安装，重新下载匹配版本的包和清单；不要绕过校验。 |
-| Linux 找不到校验工具 | v0.1.2 支持 `sha256sum` 或 `shasum`，请至少安装其中一种；旧 v0.1.1 脚本只支持 `shasum`。 |
+| Linux 找不到校验工具 | v0.1.3 支持 `sha256sum` 或 `shasum`，请至少安装其中一种；旧 v0.1.1 脚本只支持 `shasum`。 |
 | 旧版凭证管理器不可用 | 旧 v0.1.1 可修复钥匙串；新版安装器使用用户级私有 MCP 配置，无此依赖。 |
 | 提示会覆盖已修改的 Skill / Connector | 先备份并检查已有文件，确认后才使用 `--force`。 |
 | `INSTALLED_AUTHORIZATION_REQUIRED` | 初始化和工具发现成功，但缺少只读的 `get_platform_info` 授权，请联系管理员。 |

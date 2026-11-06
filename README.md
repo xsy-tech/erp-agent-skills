@@ -2,11 +2,11 @@
 
 中文 | [English](README.en.md)
 
-> v0.1.2 支持持久化鉴权：安装后重启客户端即可正常使用。旧 v0.1.1 用户请升级后重新安装集成；无需替换已有 Release 资产。
+> v0.1.3 支持持久化鉴权：安装后重启客户端即可正常使用。旧 v0.1.1 用户请升级后重新安装集成；无需替换已有 Release 资产。
 
 让 Codex、Claude Code 和 WorkBuddy 通过 ERP 开放平台 MCP，使用你获授权的 ERP 业务能力。
 
-**推荐直接安装 GitHub Release 的预编译包，不需要安装 Go、克隆仓库或编译源码。** 当前已发布版本为 [v0.1.2](https://github.com/xsy-tech/erp-agent-skills/releases/tag/v0.1.2)。
+**推荐直接安装 GitHub Release 的预编译包，不需要安装 Go、克隆仓库或编译源码。** 当前已发布版本为 [v0.1.3](https://github.com/xsy-tech/erp-agent-skills/releases/tag/v0.1.3)。
 
 ## 一键安装命令
 
@@ -17,7 +17,7 @@
 复制整行执行，自动选择 Intel / AMD 或 ARM 安装包，校验 SHA-256，安装到 `~/.local/bin`：
 
 ```bash
-set -o pipefail && curl -fsSL https://raw.githubusercontent.com/xsy-tech/erp-agent-skills/v0.1.2/scripts/install.sh | ERP_SKILL_RELEASE_BASE_URL=https://github.com/xsy-tech/erp-agent-skills/releases/download/v0.1.2 bash && export PATH="$HOME/.local/bin:$PATH" && erp-skill version
+set -o pipefail && curl -fsSL https://raw.githubusercontent.com/xsy-tech/erp-agent-skills/v0.1.3/scripts/install.sh | ERP_SKILL_RELEASE_BASE_URL=https://github.com/xsy-tech/erp-agent-skills/releases/download/v0.1.3 bash && export PATH="$HOME/.local/bin:$PATH" && erp-skill version
 ```
 
 安装脚本支持 `sha256sum` 或 `shasum`，详见[安装指南](https://github.com/xsy-tech/erp-agent-skills/blob/main/docs/installation.md)。
@@ -25,7 +25,7 @@ set -o pipefail && curl -fsSL https://raw.githubusercontent.com/xsy-tech/erp-age
 ### Windows x64（PowerShell）
 
 ```powershell
-$ErrorActionPreference = 'Stop'; & ([scriptblock]::Create((Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/xsy-tech/erp-agent-skills/v0.1.2/scripts/install.ps1').Content)) -Version '0.1.2' -BaseUrl 'https://github.com/xsy-tech/erp-agent-skills/releases/download/v0.1.2'; $env:Path = "$HOME\.local\bin;$env:Path"; erp-skill version
+$ErrorActionPreference = 'Stop'; & ([scriptblock]::Create((Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/xsy-tech/erp-agent-skills/v0.1.3/scripts/install.ps1').Content)) -Version '0.1.3' -BaseUrl 'https://github.com/xsy-tech/erp-agent-skills/releases/download/v0.1.3'; $env:Path = "$HOME\.local\bin;$env:Path"; erp-skill version
 ```
 
 默认安装到当前用户目录，无需管理员权限。这两条命令只更新当前终端的 PATH；永久设置、手动下载、升级和故障排查见[完整安装指南](https://github.com/xsy-tech/erp-agent-skills/blob/main/docs/installation.md)。
@@ -68,7 +68,7 @@ Codex 配置位于 `$CODEX_HOME/config.toml`（默认 `~/.codex/config.toml`）�
 
 ## 连接 WorkBuddy
 
-**v0.1.2 默认直接安装 MCP 和 Skill，无需导入 Connector 包。** 旧 v0.1.1 只支持下方可选的 Connector 导出方式。
+**v0.1.3 默认直接安装 MCP 和 Skill，无需导入 Connector 包。** 旧 v0.1.1 只支持下方可选的 Connector 导出方式。
 
 在 Bash 中隐藏输入个人 Key（地址替换为实际 MCP 地址）：
 
@@ -104,7 +104,7 @@ erp-skill install workbuddy --url https://erp-open.example.com/mcp --output ./er
 
 ## 中英文文档导航
 
-- [v0.1.2 project1 验证记录与已知阻塞](docs/verification-v0.1.2-project1.md)
+- [v0.1.2 project1 验证记录与已知阻塞](https://github.com/xsy-tech/erp-agent-skills/blob/main/docs/verification-v0.1.2-project1.md)
 - [安装、升级、卸载与故障排查](https://github.com/xsy-tech/erp-agent-skills/blob/main/docs/installation.md)
 - [Codex / Claude Code / WorkBuddy 安装提示词](https://github.com/xsy-tech/erp-agent-skills/blob/main/docs/agent-install-prompts.md)
 - [Agent 使用说明](https://github.com/xsy-tech/erp-agent-skills/blob/main/docs/agent-usage.md)

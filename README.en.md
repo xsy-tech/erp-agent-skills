@@ -2,11 +2,11 @@
 
 [中文](README.md) | English
 
-> v0.1.2 supports persistent authentication: install the integration, restart your client, and use it normally. Upgrade and reinstall integrations from legacy v0.1.1; existing release assets remain unchanged.
+> v0.1.3 supports persistent authentication: install the integration, restart your client, and use it normally. Upgrade and reinstall integrations from legacy v0.1.1; existing release assets remain unchanged.
 
 Connect Codex, Claude Code, and WorkBuddy to the ERP Open Platform MCP server using the capabilities authorized for your personal ERP identity.
 
-**Install a prebuilt GitHub Release package first. You do not need Go, a source checkout, or a local build.** The published version is [v0.1.2](https://github.com/xsy-tech/erp-agent-skills/releases/tag/v0.1.2).
+**Install a prebuilt GitHub Release package first. You do not need Go, a source checkout, or a local build.** The published version is [v0.1.3](https://github.com/xsy-tech/erp-agent-skills/releases/tag/v0.1.3).
 
 ## One-command installation
 
@@ -15,7 +15,7 @@ These commands download, verify, and install `erp-skill`. Install your chosen ag
 ### macOS / Linux (Bash or Zsh)
 
 ```bash
-set -o pipefail && curl -fsSL https://raw.githubusercontent.com/xsy-tech/erp-agent-skills/v0.1.2/scripts/install.sh | ERP_SKILL_RELEASE_BASE_URL=https://github.com/xsy-tech/erp-agent-skills/releases/download/v0.1.2 bash && export PATH="$HOME/.local/bin:$PATH" && erp-skill version
+set -o pipefail && curl -fsSL https://raw.githubusercontent.com/xsy-tech/erp-agent-skills/v0.1.3/scripts/install.sh | ERP_SKILL_RELEASE_BASE_URL=https://github.com/xsy-tech/erp-agent-skills/releases/download/v0.1.3 bash && export PATH="$HOME/.local/bin:$PATH" && erp-skill version
 ```
 
 The installer supports either `sha256sum` or `shasum`. See the [installation guide](https://github.com/xsy-tech/erp-agent-skills/blob/main/docs/installation.en.md).
@@ -23,7 +23,7 @@ The installer supports either `sha256sum` or `shasum`. See the [installation gui
 ### Windows x64 (PowerShell)
 
 ```powershell
-$ErrorActionPreference = 'Stop'; & ([scriptblock]::Create((Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/xsy-tech/erp-agent-skills/v0.1.2/scripts/install.ps1').Content)) -Version '0.1.2' -BaseUrl 'https://github.com/xsy-tech/erp-agent-skills/releases/download/v0.1.2'; $env:Path = "$HOME\.local\bin;$env:Path"; erp-skill version
+$ErrorActionPreference = 'Stop'; & ([scriptblock]::Create((Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/xsy-tech/erp-agent-skills/v0.1.3/scripts/install.ps1').Content)) -Version '0.1.3' -BaseUrl 'https://github.com/xsy-tech/erp-agent-skills/releases/download/v0.1.3'; $env:Path = "$HOME\.local\bin;$env:Path"; erp-skill version
 ```
 
 Both commands install into the current user's `~/.local/bin` without administrator privileges and update PATH only for the current terminal. See the installation guide for persistent PATH settings, manual downloads, upgrades, and troubleshooting.
@@ -67,7 +67,7 @@ Codex uses `$CODEX_HOME/config.toml` (default `~/.codex/config.toml`); Claude Co
 
 ## Connect WorkBuddy
 
-**v0.1.2 installs MCP and the Skill directly by default; no Connector-package import is required.** Legacy v0.1.1 supports only the optional Connector-export flow below.
+**v0.1.3 installs MCP and the Skill directly by default; no Connector-package import is required.** Legacy v0.1.1 supports only the optional Connector-export flow below.
 
 In Bash, enter the personal Key through hidden input and replace the MCP URL:
 
@@ -103,7 +103,7 @@ The current MCP `tools/list` is authoritative. The server determines your ERP us
 
 ## English documentation
 
-- [v0.1.2 project1 verification and known blockers](docs/verification-v0.1.2-project1.en.md)
+- [v0.1.2 project1 verification and known blockers](https://github.com/xsy-tech/erp-agent-skills/blob/main/docs/verification-v0.1.2-project1.en.md)
 - [Installation, upgrades, removal, and troubleshooting](https://github.com/xsy-tech/erp-agent-skills/blob/main/docs/installation.en.md)
 - [Installation prompts for all three agents](https://github.com/xsy-tech/erp-agent-skills/blob/main/docs/agent-install-prompts.en.md)
 - [Agent usage](https://github.com/xsy-tech/erp-agent-skills/blob/main/docs/agent-usage.en.md)

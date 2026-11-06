@@ -12,12 +12,12 @@ An agent needs terminal, network, and filesystem access to perform these steps. 
 Install ERP Agent Skill for the current user and configure Codex on this computer.
 
 Official repository: https://github.com/xsy-tech/erp-agent-skills
-Release: v0.1.2
+Release: v0.1.3
 MCP URL: https://erp-open.example.com/mcp (ask me to replace this placeholder before execution)
 
 1. Check OS, processor architecture, network access, and the codex executable. Prefer the matching prebuilt Release archive. Do not install Go or compile source by default.
-2. Download the matching archive and checksums.txt from https://github.com/xsy-tech/erp-agent-skills/releases/tag/v0.1.2. Verify SHA-256 before installation. Alternatively, use that Tag's scripts/install.sh or scripts/install.ps1 with the base URL https://github.com/xsy-tech/erp-agent-skills/releases/download/v0.1.2, after checking its dependencies. Stop on checksum failure.
-3. Add the current user's installation directory to PATH and verify erp-skill version reports 0.1.2.
+2. Download the matching archive and checksums.txt from https://github.com/xsy-tech/erp-agent-skills/releases/tag/v0.1.3. Verify SHA-256 before installation. Alternatively, use that Tag's scripts/install.sh or scripts/install.ps1 with the base URL https://github.com/xsy-tech/erp-agent-skills/releases/download/v0.1.3, after checking its dependencies. Stop on checksum failure.
+3. Add the current user's installation directory to PATH and verify erp-skill version reports 0.1.3.
 4. Do not request a Key in chat or place it in shared files or literal command arguments. The newer installer writes it into private user-level MCP configuration. Give me local hidden-input code that passes it through stdin to:
    erp-skill install codex --url <real-MCP-URL> --key-stdin
 5. Run erp-skill doctor codex --url <real-MCP-URL> after installation, using only connection and read-only verification.
@@ -34,12 +34,12 @@ After setup, ask: "List the read-only capabilities in the current ERP MCP connec
 Install ERP Agent Skill for the current user and configure Claude Code on this computer.
 
 Official repository: https://github.com/xsy-tech/erp-agent-skills
-Release: v0.1.2
+Release: v0.1.3
 MCP URL: https://erp-open.example.com/mcp (ask me to replace this placeholder before execution)
 
 1. Check OS, architecture, network access, and the claude executable. Prefer a prebuilt Release archive over a source build.
-2. Download the matching package and checksums.txt from https://github.com/xsy-tech/erp-agent-skills/releases/tag/v0.1.2. Verify SHA-256. The corresponding Tag's installer script can also be used with base URL https://github.com/xsy-tech/erp-agent-skills/releases/download/v0.1.2. Stop if verification fails.
-3. Set the user's PATH and confirm erp-skill version reports 0.1.2.
+2. Download the matching package and checksums.txt from https://github.com/xsy-tech/erp-agent-skills/releases/tag/v0.1.3. Verify SHA-256. The corresponding Tag's installer script can also be used with base URL https://github.com/xsy-tech/erp-agent-skills/releases/download/v0.1.3. Stop if verification fails.
+3. Set the user's PATH and confirm erp-skill version reports 0.1.3.
 4. Do not collect a Key in chat. Provide local hidden-input code that passes the Key through stdin to:
    erp-skill install claude-code --url <real-MCP-URL> --key-stdin
    Do not put Keys in chat, process arguments, project configuration, or the repository. The newer installer saves Authorization in private user configuration. Legacy v0.1.1 still uses the ${ERP_OPEN_CLAUDE_KEY} placeholder; distinguish these versions.
@@ -51,16 +51,16 @@ MCP URL: https://erp-open.example.com/mcp (ask me to replace this placeholder be
 
 ## WorkBuddy
 
-Use the v0.1.2 prebuilt package for direct installation. Legacy v0.1.1 supports Connector export only.
+Use the v0.1.3 prebuilt package for direct installation. Legacy v0.1.1 supports Connector export only.
 
 ```text
 Install ERP MCP and the ERP Skill directly for the current WorkBuddy user. Do not require Connector-package import.
 
 Official repository: https://github.com/xsy-tech/erp-agent-skills
-Release: v0.1.2. Do not silently substitute v0.1.1, which exports Connectors only.
+Release: v0.1.3. Do not silently substitute v0.1.1, which exports Connectors only.
 MCP URL: https://erp-open.example.com/mcp (ask me to replace the placeholder before execution)
 
-1. Check OS, architecture, terminal/network access, and the installed WorkBuddy client. Download the matching prebuilt package and checksums.txt from https://github.com/xsy-tech/erp-agent-skills/releases/tag/v0.1.2; verify SHA-256 and erp-skill version reports 0.1.2. Stop if download or verification fails; do not install Go or compile by default.
+1. Check OS, architecture, terminal/network access, and the installed WorkBuddy client. Download the matching prebuilt package and checksums.txt from https://github.com/xsy-tech/erp-agent-skills/releases/tag/v0.1.3; verify SHA-256 and erp-skill version reports 0.1.3. Stop if download or verification fails; do not install Go or compile by default.
 2. Do not request a Key in chat. Provide local hidden-input code that pipes it to:
    erp-skill install workbuddy --url <real-MCP-URL> --key-stdin
    Do not add --output or require a Connector Token form for this mode.

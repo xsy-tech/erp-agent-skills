@@ -12,14 +12,14 @@
 请为当前用户安装 ERP Agent Skill 并配置当前电脑上的 Codex。
 
 官方仓库：https://github.com/xsy-tech/erp-agent-skills
-目标发布版本：v0.1.2
+目标发布版本：v0.1.3
 MCP 地址：https://erp-open.example.com/mcp（执行前请让我替换成真实地址）
 
 请执行：
 1. 检查操作系统、处理器架构、网络和 codex 命令。优先使用 Release 预编译包，不要默认安装 Go、克隆或编译源码。
-2. 从 https://github.com/xsy-tech/erp-agent-skills/releases/tag/v0.1.2 选择对应平台包，下载 checksums.txt，核对 SHA-256 后再安装到当前用户可用的目录。
-   也可使用该 Tag 下 scripts/install.sh 或 scripts/install.ps1；可指定下载目录 https://github.com/xsy-tech/erp-agent-skills/releases/download/v0.1.2。根据操作系统检查脚本所需工具，校验失败立即停止。
-3. 确保 PATH 可找到 erp-skill，运行 erp-skill version，核对版本为 0.1.2。
+2. 从 https://github.com/xsy-tech/erp-agent-skills/releases/tag/v0.1.3 选择对应平台包，下载 checksums.txt，核对 SHA-256 后再安装到当前用户可用的目录。
+   也可使用该 Tag 下 scripts/install.sh 或 scripts/install.ps1；可指定下载目录 https://github.com/xsy-tech/erp-agent-skills/releases/download/v0.1.3。根据操作系统检查脚本所需工具，校验失败立即停止。
+3. 确保 PATH 可找到 erp-skill，运行 erp-skill version，核对版本为 0.1.3。
 4. 不要向我索取聊天中的 API Key，不要把 Key 写进命令参数或共享文件；新版安装器会将 Key 保存到本机用户级私有 MCP 配置。需要凭证时，给我一段在本机终端隐藏输入并通过标准输入执行以下命令的代码：
    erp-skill install codex --url <真实MCP地址> --key-stdin
 5. 安装完成后运行 erp-skill doctor codex --url <真实MCP地址>。只验证连接和只读能力，不执行写入业务操作。
@@ -28,7 +28,7 @@ MCP 地址：https://erp-open.example.com/mcp（执行前请让我替换成真�
 8. 用中文报告安装路径、版本、doctor 实际结果和剩余步骤。尚未输入凭证或尚未启动新会话时，不能把状态说成已验证。
 ```
 
-v0.1.2 会持久化 Skill 和包含鉴权的用户级 MCP 配置，之后可正常启动本地客户端。旧 v0.1.1 用户升级后需重新安装集成，才能迁移原有启动流程。
+v0.1.3 会持久化 Skill 和包含鉴权的用户级 MCP 配置，之后可正常启动本地客户端。旧 v0.1.1 用户升级后需重新安装集成，才能迁移原有启动流程。
 
 安装后可发送：“列出当前 ERP MCP 连接可用的只读能力，并解释我的用户和数据范围；不要执行写入。”
 
@@ -38,14 +38,14 @@ v0.1.2 会持久化 Skill 和包含鉴权的用户级 MCP 配置，之后可正�
 请为当前用户安装 ERP Agent Skill 并配置当前电脑上的 Claude Code。
 
 官方仓库：https://github.com/xsy-tech/erp-agent-skills
-目标发布版本：v0.1.2
+目标发布版本：v0.1.3
 MCP 地址：https://erp-open.example.com/mcp（执行前请让我替换成真实地址）
 
 请执行：
 1. 检查操作系统、处理器架构、网络和 claude 命令。优先下载 Release 预编译包，不要默认安装 Go 或从源码编译。
-2. 在 https://github.com/xsy-tech/erp-agent-skills/releases/tag/v0.1.2 下载匹配的平台包和 checksums.txt，核对 SHA-256 后安装 erp-skill。
-   也可运行对应 Tag 的 scripts/install.sh 或 scripts/install.ps1，并指定下载目录 https://github.com/xsy-tech/erp-agent-skills/releases/download/v0.1.2。校验失败立即停止。
-3. 设置当前用户 PATH，运行 erp-skill version，核对为 0.1.2。
+2. 在 https://github.com/xsy-tech/erp-agent-skills/releases/tag/v0.1.3 下载匹配的平台包和 checksums.txt，核对 SHA-256 后安装 erp-skill。
+   也可运行对应 Tag 的 scripts/install.sh 或 scripts/install.ps1，并指定下载目录 https://github.com/xsy-tech/erp-agent-skills/releases/download/v0.1.3。校验失败立即停止。
+3. 设置当前用户 PATH，运行 erp-skill version，核对为 0.1.3。
 4. 不在聊天里收集个人 API Key。给我本机终端隐藏输入的代码，将 Key 通过标准输入交给：
    erp-skill install claude-code --url <真实MCP地址> --key-stdin
    不要把真实 Key 写进聊天、进程参数、项目配置或仓库。新版安装器会将 Authorization 写入本机用户级私有配置；旧 v0.1.1 仍使用 ${ERP_OPEN_CLAUDE_KEY} 占位符，不要混淆两个版本的行为。
@@ -57,17 +57,17 @@ MCP 地址：https://erp-open.example.com/mcp（执行前请让我替换成真�
 
 ## WorkBuddy 安装提示词
 
-以下直接安装流程使用 v0.1.2 预编译包，不能使用仅支持 Connector 导出的旧 v0.1.1 代替。
+以下直接安装流程使用 v0.1.3 预编译包，不能使用仅支持 Connector 导出的旧 v0.1.1 代替。
 
 ```text
 请为当前用户直接安装 ERP MCP 和 ERP Skill 到 WorkBuddy，不要求导入 Connector 包。
 
 官方仓库：https://github.com/xsy-tech/erp-agent-skills
-目标发布版本：v0.1.2。不要静默回退到仅导出 Connector 的 v0.1.1。
+目标发布版本：v0.1.3。不要静默回退到仅导出 Connector 的 v0.1.1。
 MCP 地址：https://erp-open.example.com/mcp（执行前请让我替换成真实地址）
 
 请执行：
-1. 检查系统、处理器、终端和网络权限，以及 WorkBuddy 是否已安装。从 https://github.com/xsy-tech/erp-agent-skills/releases/tag/v0.1.2 下载匹配平台的预编译包和 checksums.txt，核对 SHA-256 和 erp-skill version 为 0.1.2；下载或校验失败应停止，不要默认安装 Go 或从源码编译。
+1. 检查系统、处理器、终端和网络权限，以及 WorkBuddy 是否已安装。从 https://github.com/xsy-tech/erp-agent-skills/releases/tag/v0.1.3 下载匹配平台的预编译包和 checksums.txt，核对 SHA-256 和 erp-skill version 为 0.1.3；下载或校验失败应停止，不要默认安装 Go 或从源码编译。
 2. 不在聊天中询问 API Key。给我本机终端隐藏输入代码，通过标准输入运行：
    erp-skill install workbuddy --url <真实MCP地址> --key-stdin
    此模式不要加 --output，也不需要我填写 Connector Token 表单。

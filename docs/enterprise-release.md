@@ -27,7 +27,7 @@ make build
 ```bash
 make release
 # 或明确核对将要发布的源码版本：
-make release VERSION=0.1.2
+make release VERSION=0.1.3
 ```
 
 发布前需要：
@@ -59,7 +59,7 @@ make release REPO=owner/repository
 下载地址格式为：
 
 ```text
-https://github.com/xsy-tech/erp-agent-skills/releases/download/v0.1.2/erp-agent-skill_0.1.2_darwin_arm64.tar.gz
+https://github.com/xsy-tech/erp-agent-skills/releases/download/v0.1.3/erp-agent-skill_0.1.3_darwin_arm64.tar.gz
 ```
 
 **已发布包保持不可变。** v0.1.1 内置的 README、Skill 和 Connector 模板以当时的发布提交为准。仓库后续的中文文档与模板改动，需要在新版本构建发布后才会进入下载包，不要直接覆盖 v0.1.1 的资产。发布新版本后，核对一键安装命令实际使用的脚本 Tag、包版本和校验文件一致。

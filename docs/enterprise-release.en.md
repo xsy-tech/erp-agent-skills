@@ -27,7 +27,7 @@ make build
 ```bash
 make release
 # Or explicitly assert the expected source version:
-make release VERSION=0.1.2
+make release VERSION=0.1.3
 ```
 
 Before publishing:
@@ -54,7 +54,7 @@ After upload failure, inspect the Releases page for incomplete drafts before ret
 Example URL:
 
 ```text
-https://github.com/xsy-tech/erp-agent-skills/releases/download/v0.1.2/erp-agent-skill_0.1.2_darwin_arm64.tar.gz
+https://github.com/xsy-tech/erp-agent-skills/releases/download/v0.1.3/erp-agent-skill_0.1.3_darwin_arm64.tar.gz
 ```
 
 Published archives remain immutable. v0.1.1 contains the README, Skill, and templates from its original release commit. Later bilingual changes only reach downloaded binaries after a new version is built and published; do not replace existing v0.1.1 assets. Verify that bootstrap-script tags, archive versions, and checksum files match after releasing.
