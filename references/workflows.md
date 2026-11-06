@@ -1,24 +1,24 @@
-# ERP Workflows
+# ERP 业务工作流
 
-## Search Then Select
+## 先搜索，再选定
 
-1. Search with the user's name, account, document number, SKU, or other stable identifier.
-2. If there are no results, report that fact without inventing data.
-3. If there is one unambiguous result, display the identifying fields before continuing.
-4. If there are multiple candidates, display the fields that distinguish them and ask the user to select one.
+1. 使用姓名、账号、单据号、SKU 等稳定标识搜索。
+2. 没有结果时明确告知，不编造数据。
+3. 仅有一个明确结果时，展示可识别的关键字段，再继续操作。
+4. 有多个候选对象时，展示区分字段，请用户选定。
 
-## Read Before Write
+## 先读取，再写入
 
-Read the current object state before updating, submitting, posting, paying, shipping, or deleting it. Refuse to assume the current status when the required read tool is unavailable.
+更新、提交、过账、付款、发货或删除前，读取对象当前状态。如果所需查询工具不可用，不要假设当前状态。
 
-## Create With Idempotency
+## 使用幂等键创建
 
-When a write tool requires `idempotency_key`, create one stable key for the user's single intended operation and reuse it only for an exact retry of the same input. Never reuse it for different input.
+写工具要求 `idempotency_key` 时，为用户这一次明确的操作生成稳定标识。只有输入完全相同的重试才复用该键；不同输入不可复用。
 
-## Confirm Before Submit
+## 提交前确认
 
-Before a high-impact tool call, summarize the selected object, quantities or amounts, destination, resulting state, and whether the action can be reversed. Call the tool only after explicit user confirmation.
+调用高影响工具前，说明选中的对象、数量或金额、目的地、操作后的状态及是否可撤销。获得用户对这一操作的明确确认后再调用。
 
-## Capability Refresh
+## 刷新能力列表
 
-Do not run a local synchronization command. If an administrator changes the API Key's capabilities, reconnect the MCP server or start a new agent session and inspect `tools/list` again.
+管理员调整 Key 的能力后，重连 MCP 或启动新 Agent 会话，再检查 `tools/list`。不需要本地同步命令或后台轮询。

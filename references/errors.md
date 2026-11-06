@@ -1,13 +1,13 @@
-# ERP Error Handling
+# ERP 错误处理
 
-| Error | Agent response |
-|---|---|
-| Tool absent from `tools/list` | Explain that the current connection does not expose the capability. Do not invent the call. Reconnect if authorization was just changed. |
-| `CAPABILITY_DENIED` | Explain that the current API Key lacks the capability and request administrator authorization. |
-| Invalid, expired, or revoked key | Stop ERP calls and ask the user to repair their personal credential through the approved installer or agent Token UI. |
-| Tenant or user mismatch | Stop. Do not attempt to override identity parameters. Ask an administrator to issue the correct personal key. |
-| Rate limited | Respect retry guidance, avoid parallel retries, and tell the user when another attempt is appropriate. |
-| Upstream timeout or unavailable | Report the operation as unconfirmed. For writes, read the current state before any retry. |
-| Validation error | Correct only the invalid business input. Do not weaken or bypass server validation. |
+| 错误或现象 | Agent 应如何处理 |
+| --- | --- |
+| 工具不在 `tools/list` 中 | 说明当前连接未暴露该能力，不要编造调用；刚修改授权时可重连后检查。 |
+| `CAPABILITY_DENIED` | 说明当前 API Key 缺少能力权限，请联系管理员授权。 |
+| Key 无效、过期或已撤销 | 停止 ERP 调用，请用户通过认可的安装器或客户端 Token 界面修复个人凭证。 |
+| 租户或用户不匹配 | 停止操作，不尝试覆盖身份参数；请管理员签发正确的个人 Key。 |
+| 触发限流 | 遵循重试指引，避免并发重试，并告诉用户适当的重试时机。 |
+| 上游超时或不可用 | 将结果标记为尚未确认；写操作在重试前先读取当前状态。 |
+| 业务校验错误 | 只纠正无效的业务输入，不削弱或绕过服务端校验。 |
 
-Never include credentials, raw upstream bodies, SQL, or stack traces when explaining an error.
+解释错误时，不包含凭证、原始上游响应体、SQL 或内部堆栈。

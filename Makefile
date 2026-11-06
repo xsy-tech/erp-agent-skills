@@ -26,13 +26,13 @@ release:
 
 help:
 	@printf '%s\n' \
-	  'make build          Build the local CLI' \
-	  'make check          Run tests and go vet' \
-	  'make dist           Build archives for all five platforms' \
-	  'make release-check  Check, package, and verify checksums locally' \
-	  'make release        Build and publish a GitHub Release for the source version' \
-	  '                    Optional: VERSION=0.1.1 REPO=xsy-tech/erp-agent-skills' \
-	  'make clean          Remove bin/ and dist/'
+	  'make build          构建本机命令行工具' \
+	  'make check          运行测试和 go vet' \
+	  'make dist           生成全部五个平台的安装包' \
+	  'make release-check  本地检查、打包并验证 SHA-256' \
+	  'make release        按源码版本构建并发布 GitHub Release' \
+	  '                    可选：VERSION=0.1.1 REPO=xsy-tech/erp-agent-skills' \
+	  'make clean          清理 bin/ 和 dist/'
 
 clean:
 	rm -rf bin dist

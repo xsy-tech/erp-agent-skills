@@ -84,9 +84,9 @@ func (a *App) Run(ctx context.Context, args []string) error {
 }
 
 func (a *App) writeHelp() {
-	fmt.Fprintln(a.Out, `erp-skill manages ERP Open Platform agent integrations.
+	fmt.Fprintln(a.Out, `erp-skill 用于安装、验证和启动 ERP 开放平台的 Agent 集成。
 
-Commands:
+命令：
   install codex|claude-code --url URL --key-stdin [--force]
   install workbuddy --url URL --output DIRECTORY [--force]
   doctor codex|claude-code --url URL

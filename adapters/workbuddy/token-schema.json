@@ -2,10 +2,10 @@
   "fields": [
     {
       "key": "ERP_OPEN_API_KEY",
-      "label": "ERP Open Platform API Key",
+      "label": "ERP 开放平台个人 API Key",
       "type": "password",
       "required": true,
-      "placeholder": "Enter your personal ERP API Key"
+      "placeholder": "请输入管理员为你签发的个人 ERP API Key"
     }
   ]
 }
