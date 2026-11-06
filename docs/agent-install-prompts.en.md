@@ -18,11 +18,11 @@ MCP URL: https://erp-open.example.com/mcp (ask me to replace this placeholder be
 1. Check OS, processor architecture, network access, and the codex executable. Prefer the matching prebuilt Release archive. Do not install Go or compile source by default.
 2. Download the matching archive and checksums.txt from https://github.com/xsy-tech/erp-agent-skills/releases/tag/v0.1.1. Verify SHA-256 before installation. Alternatively, use that Tag's scripts/install.sh or scripts/install.ps1 with the base URL https://github.com/xsy-tech/erp-agent-skills/releases/download/v0.1.1, after checking its dependencies. Stop on checksum failure.
 3. Add the current user's installation directory to PATH and verify erp-skill version reports 0.1.1.
-4. Do not request a Key in chat or place it in files or literal command arguments. Give me local hidden-input code that passes it through stdin to:
+4. Do not request a Key in chat or place it in shared files or literal command arguments. The newer installer writes it into private user-level MCP configuration. Give me local hidden-input code that passes it through stdin to:
    erp-skill install codex --url <real-MCP-URL> --key-stdin
 5. Run erp-skill doctor codex --url <real-MCP-URL> after installation, using only connection and read-only verification.
 6. If managed files conflict, explain the affected files and ask me to back them up and confirm replacement before using --force.
-7. Tell me to exit this Codex session and run erp-skill launch codex in a terminal. Bare codex can discover installed configuration but does not automatically load the ERP Key from this project's credential manager. Do not start a nested interactive session.
+7. Check the installed version: with the newer persistent-auth installer, restart the client and use codex or a matching local desktop Code session directly. Published v0.1.1 still needs erp-skill launch codex. Do not claim legacy packages have the new behavior or nest interactive sessions.
 8. Report the installation path, version, actual verification result, and remaining user steps. Missing credential input or a required restart must not be reported as verified success.
 ```
 
@@ -42,10 +42,10 @@ MCP URL: https://erp-open.example.com/mcp (ask me to replace this placeholder be
 3. Set the user's PATH and confirm erp-skill version reports 0.1.1.
 4. Do not collect a Key in chat. Provide local hidden-input code that passes the Key through stdin to:
    erp-skill install claude-code --url <real-MCP-URL> --key-stdin
-   Keep ${ERP_OPEN_CLAUDE_KEY} as a placeholder in the Claude configuration. Do not put a literal Key into files, command arguments, or the repository.
+   Do not put Keys in chat, process arguments, project configuration, or the repository. The newer installer saves Authorization in private user configuration. Legacy v0.1.1 still uses the ${ERP_OPEN_CLAUDE_KEY} placeholder; distinguish these versions.
 5. Run erp-skill doctor claude-code --url <real-MCP-URL> using read-only checks.
 6. Explain existing-file conflicts and let me back up and confirm replacement before --force.
-7. Tell me to exit this session and run erp-skill launch claude-code in a terminal. Bare claude can load persistent configuration but does not automatically fetch the ERP credential from this project's keyring. Do not nest interactive sessions.
+7. With the newer persistent-auth installer, restart and use claude or a local Claude Code desktop Code session directly. Legacy v0.1.1 still needs erp-skill launch claude-code. Do not nest interactive sessions.
 8. Report paths, version, actual checks, and remaining steps. Do not claim completion while credential input or restarting is still pending.
 ```
 
@@ -73,7 +73,7 @@ MCP URL: https://erp-open.example.com/mcp (ask me to replace this placeholder be
 ## Completion criteria
 
 - The executable version matches the selected release.
-- Codex / Claude Code installation succeeds, `doctor` reports its actual result, and a new session starts with `erp-skill launch`.
+- Codex / Claude Code installation succeeds, `doctor` reports its actual result, and the client restarts using the installed version’s authentication flow: direct startup for the newer installer, or the legacy launcher for v0.1.1.
 - WorkBuddy has a generated Connector, completed UI import, configured Token, and an active MCP connection. Standalone `doctor` only verifies the endpoint and Key supplied to it.
 - `INSTALLED_AUTHORIZATION_REQUIRED` is not equivalent to full `VERIFIED` status.
 

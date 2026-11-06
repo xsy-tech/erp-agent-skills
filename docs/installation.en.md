@@ -2,11 +2,13 @@
 
 [中文](installation.md) | English
 
+> Version note: persistent authentication and direct startup below describe the v0.1.2 installer (not yet published). Published v0.1.1 still uses the legacy environment-variable flow. Install a release containing this change, or build the newer source and reinstall the integration. Existing release assets are not replaced.
+
 ## Choose an installation method
 
 Use the [prebuilt Release packages](https://github.com/xsy-tech/erp-agent-skills/releases) for ordinary installations. You do not need Go, GitHub CLI, repository write access, or source compilation. Install Codex, Claude Code, or WorkBuddy separately; `erp-skill` configures and launches integrations, rather than replacing an agent client.
 
-Obtain the MCP URL and a personal API Key bound to the correct ERP user and tenant. Codex / Claude Code require an available OS credential manager: macOS Keychain, Windows Credential Manager, or Linux Secret Service. A headless Linux host also needs a working Secret Service backend; the installer does not fall back to plaintext storage.
+Obtain the MCP URL and a personal API Key bound to the correct ERP user and tenant. The newer installer persists authentication in private user-level Codex / Claude Code configuration. It no longer requires an OS keyring or Linux Secret Service. Old keyring entries are read only for compatibility when a persistent credential is unavailable.
 
 | OS | Processor | v0.1.1 package |
 | --- | --- | --- |
@@ -122,37 +124,65 @@ try {
 erp-skill doctor $Agent --url $McpUrl
 ```
 
-The Key is entered through hidden input and passed through stdin, not literal command arguments, chat, or configuration. Plaintext exists briefly in process memory for transmission; the installer stores it in the OS credential manager.
+The Key is entered through hidden input and passed through stdin, never literal command arguments or chat. The installer saves it in the current user’s private MCP configuration for direct client access. Do not commit or share that file.
 
 ### Start a new session
 
-Exit the current agent session, then run one of:
+Restart the client after installation, then use the usual commands:
 
 ```bash
-erp-skill launch codex
-erp-skill launch claude-code
+codex
+# Or:
+claude
 ```
 
-Do not ask an already-running agent to nest a new interactive session. Installation persists the shared Skill, references, and the `erp-open` MCP registration. Start a new session or reconnect and check the current `tools/list`.
+Local desktop Code sessions using the same user configuration can also connect directly. Reconnect MCP or restart an already-running client to reload its configuration. No ERP credential environment variable or nested interactive session is required.
 
 ## Starting codex or claude directly
 
-An MCP `initialize` handshake checks a connection; it does not install a Skill or persist client configuration. The following applies after successful `erp-skill install codex` or `erp-skill install claude-code`:
+The newer installer persists the shared Skill, URL, and authentication header:
 
-| Item | New bare codex / claude process | erp-skill launch |
+| Client | User configuration | Credential field |
 | --- | --- | --- |
-| Installed ERP Skill | Discoverable from the client's local Skill directory; full instructions are used when relevant. | Uses the same installed Skill. |
-| Persisted erp-open MCP configuration | Read by the configured client, subject to its settings and version. | Uses the same registration. |
-| Key stored by erp-skill in the OS credential manager | This project's keyring loader is not invoked. | Read and injected into the child agent process. |
-| Successful authenticated ERP calls | Requires the matching credential environment variable already present and valid. | Uses the stored credential; endpoint access and server authorization still apply. |
+| Codex CLI / local Codex desktop using the same configuration | $CODEX_HOME/config.toml; default ~/.codex/config.toml | mcp_servers.erp-open.http_headers.Authorization |
+| Claude Code CLI / local desktop Code session | ~/.claude.json; with CLAUDE_CONFIG_DIR, .claude.json inside that directory | mcpServers.erp-open.headers.Authorization |
 
-The required variables are `ERP_OPEN_CODEX_KEY` for Codex and `ERP_OPEN_CLAUDE_KEY` for Claude Code. Saving a Key during installation does not export it into the parent terminal; running `launch` once does not authenticate separate terminals or a later unrelated `codex` / `claude` process. Successful `doctor` checks also do not export these variables.
+Codex configuration uses this form; the example Key is a placeholder, and the installer receives the real value through stdin:
 
-The current installer places Codex Skills in `$CODEX_HOME/skills/erp-open-platform` (default `~/.codex/skills/erp-open-platform`) and Claude Code Skills in `~/.claude/skills/erp-open-platform`. Skill discovery locations depend on the client version; check the installed client's Skill list if it does not appear. Do not assume this covers every future client release.
+```toml
+[mcp_servers.erp-open]
+url = "https://erp-open.example.com/mcp"
+[mcp_servers.erp-open.http_headers]
+Authorization = "Bearer <YOUR_PERSONAL_KEY>"
+```
 
-For routine use, prefer `launch`. Do not add literal Keys to shell startup files or MCP configuration. There is no automatic shell alias or global credential export installed by this project.
+Claude Code uses:
 
-Sources: [Codex MCP](https://developers.openai.com/codex/mcp/), [Codex Skills](https://developers.openai.com/codex/skills/), [Claude Code MCP](https://code.claude.com/docs/en/mcp), and [Claude Code Skills](https://code.claude.com/docs/en/skills). The paths and keyring behavior above describe this repository's implementation.
+```json
+{
+  "mcpServers": {
+    "erp-open": {
+      "type": "http",
+      "url": "https://erp-open.example.com/mcp",
+      "headers": { "Authorization": "Bearer <YOUR_PERSONAL_KEY>" }
+    }
+  }
+}
+```
+
+These are private user files, not a project .mcp.json or files to commit. Unix permissions are set to 0600; Windows uses the user profile's access controls. Updates change erp-open while preserving other servers and settings. Keys are never passed through client command arguments or printed. Invalid existing configurations are rejected without overwriting the file.
+
+After restarting under the same account, the client can read the saved credential. Skill instructions remain loaded on demand for relevant work. An initialize handshake alone does not install a Skill.
+
+The current Skill paths are $CODEX_HOME/skills/erp-open-platform (default ~/.codex/skills/erp-open-platform) and ~/.claude/skills/erp-open-platform. With CLAUDE_CONFIG_DIR, Claude uses skills/erp-open-platform inside that directory. Client versions and disabling policies can affect discovery.
+
+`erp-skill launch` remains a compatibility option. Both doctor and launch read persistent configuration first, falling back to an old OS credential only when necessary. New installations require no OS keyring.
+
+**Migration:** published v0.1.1 still uses ERP_OPEN_CODEX_KEY / ${ERP_OPEN_CLAUDE_KEY} and keyring credentials, so its launcher flow remains necessary. Install a newer release containing this change, rerun the secure install command, and replace conflicting Skill files with --force only after backup and confirmation. The installer replaces the old ERP environment-variable registration with fixed headers; then restart the client.
+
+**Desktop scope:** this describes local Codex and Claude Code Code sessions reading these user files. Ordinary Claude Desktop chat and cloud sessions have different configuration entry points and require their own import or authorization; they are not claimed to work merely because a local Code integration was installed.
+
+Sources: [Codex MCP](https://developers.openai.com/codex/mcp/), [Codex configuration](https://developers.openai.com/codex/config-reference/), [Claude Code MCP](https://code.claude.com/docs/en/mcp), and [Claude Code desktop](https://code.claude.com/docs/en/desktop).
 
 ## Connect WorkBuddy
 
@@ -191,10 +221,10 @@ Remove WorkBuddy Connectors and Tokens through its UI. Once no client uses the C
 | Download returns 404 | Check the published version, platform, filename, and mirror. |
 | Checksum mismatch | Stop; redownload the matching archive and manifest. Do not bypass verification. |
 | shasum missing on Linux | The pinned v0.1.1 script needs it; install Perl, verify manually, or use the newer repository script. |
-| Credential manager unavailable | Repair Keychain / Credential Manager / Secret Service; do not use plaintext fallback storage. |
+| Legacy credential manager unavailable | Repair it for v0.1.1, or migrate to the newer installer, which uses private user configuration. |
 | Existing files differ | Back them up and inspect them before using --force. |
 | INSTALLED_AUTHORIZATION_REQUIRED | Ask an administrator to authorize read-only get_platform_info. |
-| Bare codex / claude sees ERP configuration but cannot call tools | Prefer erp-skill launch; bare startup does not load this project's keyring credential. |
+| Direct client startup cannot call ERP | Confirm migration and restart, run doctor, check Key validity, and check for project-level overrides. |
 | Added tools are missing | Reconnect MCP or start a new session and inspect tools/list. |
 | Only a WorkBuddy directory was generated | Complete Connector import, Token configuration, and connection in WorkBuddy. |
 

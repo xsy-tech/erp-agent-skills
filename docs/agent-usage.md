@@ -36,9 +36,9 @@ Key 绑定的 ERP 用户和租户在开放平台管理端确定，工具参数�
 
 MCP `initialize` 是握手，不会自动安装 Skill。执行 `erp-skill install` 才会安装本地 Skill 和注册 MCP。新客户端会话可以发现这些配置，但 Skill 正文只在需要时加载，不表示所有请求都强制应用 ERP 规则。
 
-直接运行 `codex` / `claude` 不会调用本项目的系统凭证读取器。除非该进程已获得 `ERP_OPEN_CODEX_KEY` / `ERP_OPEN_CLAUDE_KEY`，否则发现 MCP 配置不代表能够完成 ERP 鉴权；安装和 `doctor` 都不会向父终端导出 Key。详见[直接启动说明](installation.md#直接运行-codex-或-claude)。
+新版安装器将 URL 和 `Authorization` 凭证保存到用户级 MCP 配置，安装后重启客户端即可直接运行 `codex` / `claude`，或使用同一配置的本地桌面 Code 会话。Skill 正文仍按需加载。
 
-Codex 和 Claude Code 完成安装后，应从终端运行 `erp-skill launch codex` 或 `erp-skill launch claude-code` 启动新会话。启动器从系统凭证管理器取出 Key，只注入目标子进程。
+`doctor` 优先读取同一份持久化凭证；`erp-skill launch` 仅保留为兼容入口。新安装不再要求系统钥匙串或 Secret Service。旧 v0.1.1 尚未包含此改动，仍需其原有启动流程，升级后重新安装集成即可迁移。详见[直接启动说明](installation.md#直接运行-codex-或-claude)。普通 Claude 桌面聊天客户端和云端会话不属于同一个配置入口。
 
 WorkBuddy 需要导入生成的 Connector，在其 Token 界面填写个人 Key 并连接 MCP。它不使用 `erp-skill launch`，仅生成 Connector 目录也不代表已经连接成功。
 

@@ -44,35 +44,26 @@ func (a *App) runInstall(ctx context.Context, args []string) error {
 	if _, err := a.Doctor.Doctor(ctx, *endpoint, secret); err != nil {
 		return redactError(err, secret)
 	}
-	previousSecret, previousSecretErr := a.Credentials.Get(agent, *endpoint)
-	credentialExisted := previousSecretErr == nil
 	previousEndpoint, previousEndpointErr := a.Profiles.Get(agent)
 	profileExisted := previousEndpointErr == nil
-	if err := a.Credentials.Set(agent, *endpoint, secret); err != nil {
-		return redactError(err, secret)
-	}
 	rollback := func() {
-		restoreCredential(a.Credentials, agent, *endpoint, previousSecret, credentialExisted)
 		restoreProfile(a.Profiles, agent, previousEndpoint, profileExisted)
 	}
 	if err := a.Profiles.Set(agent, *endpoint); err != nil {
 		rollback()
 		return redactError(err, secret)
 	}
-	if err := installer.InstallSkill(agent, a.HomeDir, a.CodexHome, *force); err != nil {
+	if err := installer.InstallSkill(agent, a.HomeDir, a.CodexHome, *force, a.ClaudeConfigDir); err != nil {
 		rollback()
 		return redactError(err, secret)
 	}
-	if agent == "codex" {
-		err = installer.RegisterCodex(ctx, a.Commands, *endpoint)
-	} else {
-		err = installer.RegisterClaudeCode(ctx, a.Commands, *endpoint)
-	}
+	err = a.clientConfig().Register(agent, *endpoint, secret)
 	if err != nil {
 		rollback()
 		return redactError(err, secret)
 	}
 	fmt.Fprintf(a.Out, "installed %s integration for %s\n", agent, *endpoint)
+	fmt.Fprintln(a.Out, "重启客户端后可直接使用 / Restart your client, then use codex, claude, or its local desktop Code session directly.")
 	return nil
 }
 

@@ -36,9 +36,9 @@ func (a *App) runDoctor(ctx context.Context, args []string) error {
 		secret, err = readSecret(a.In)
 	} else {
 		if *keyStdin {
-			return errors.New("local agent doctor reads the stored OS credential")
+			return errors.New("local agent doctor reads saved MCP configuration, with legacy credential fallback")
 		}
-		secret, err = a.Credentials.Get(agent, *endpoint)
+		secret, err = a.storedCredential(agent, *endpoint)
 	}
 	if err != nil {
 		return err

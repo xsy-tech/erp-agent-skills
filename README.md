@@ -2,6 +2,8 @@
 
 中文 | [English](README.en.md)
 
+> 版本说明：下文“安装后直接启动”的持久化鉴权模式属于 v0.1.2 安装器（待发布）。已发布的 v0.1.1 仍使用旧环境变量模式；需要安装包含本次改动的新版本，或从新版源码构建后重新安装集成。现有 Release 不会被替换。
+
 让 Codex、Claude Code 和 WorkBuddy 通过 ERP 开放平台 MCP，使用你获授权的 ERP 业务能力。
 
 **推荐直接安装 GitHub Release 的预编译包，不需要安装 Go、克隆仓库或编译源码。** 当前已发布版本为 [v0.1.1](https://github.com/xsy-tech/erp-agent-skills/releases/tag/v0.1.1)。
@@ -47,22 +49,22 @@ unset ERP_INSTALL_KEY
 erp-skill doctor "$AGENT" --url "$MCP_URL"
 ```
 
-安装成功后退出当前 Agent 会话，从终端启动新会话：
+安装成功后重启客户端，之后照常使用：
 
 ```bash
-erp-skill launch codex
-# 或：erp-skill launch claude-code
+codex
+# 或：claude
 ```
 
-安装器会安装共享 Skill、注册名为 `erp-open` 的 MCP 服务，并将个人凭证保存到系统凭证管理器。每次使用 `launch`，凭证才会注入所启动的 Agent 进程。Windows 的安全输入命令见[安装指南](https://github.com/xsy-tech/erp-agent-skills/blob/main/docs/installation.md#连接-codex-或-claude-code)。
+也可以直接打开读取同一用户配置的 Codex 桌面版或 Claude Code 桌面 Code 会话。安装器将 URL 和 `Authorization: Bearer …` 保存到用户级 MCP 配置，同时安装共享 Skill；不再要求通过特殊启动器或 shell 环境变量鉴权。Windows 的安全输入命令见[安装指南](https://github.com/xsy-tech/erp-agent-skills/blob/main/docs/installation.md#连接-codex-或-claude-code)。
 
 ## 直接运行 codex 或 claude 会加载 ERP 吗？
 
-执行 `erp-skill install` 后，新的本机客户端会话会读取已注册的 MCP 配置，并发现安装好的 ERP Skill；Skill 正文由 Agent 在相关请求中按需加载。
+使用新版安装器完成 `erp-skill install` 后，客户端读取持久化的 `erp-open` MCP 配置和凭证，并发现 ERP Skill。Skill 正文按需加载，不会强制影响所有任务。
 
-**发现配置不等于完成鉴权。** 直接运行 `codex` 或 `claude` 不会调用本项目的系统凭证读取器，只有进程已经获得对应的 `ERP_OPEN_CODEX_KEY` / `ERP_OPEN_CLAUDE_KEY` 环境变量时，才能使用该凭证连接 ERP。安装和 `doctor` 不会向父终端导出 Key，因此日常推荐使用 `erp-skill launch`。
+Codex 配置位于 `$CODEX_HOME/config.toml`（默认 `~/.codex/config.toml`）；Claude Code 的用户级配置为 `~/.claude.json`。配置包含个人 Key，仅保存在当前用户目录，Unix 文件权限设为 `0600`；不要提交到仓库或发到聊天中。安装器不把 Key 放进客户端命令行参数。
 
-仅完成 MCP `initialize` 握手不会自动安装 Skill 或持久化客户端配置。[完整说明](https://github.com/xsy-tech/erp-agent-skills/blob/main/docs/installation.md#直接运行-codex-或-claude)区分了这些步骤。
+`erp-skill launch` 保留为兼容入口，`doctor` 优先读取同一份持久化配置；旧的系统凭证仅用于兼容。仅完成 MCP `initialize` 握手不会安装 Skill。普通 Claude 桌面聊天客户端和云端会话使用不同配置入口，不能与 Claude Code 的本地 Code 会话混为一谈。[完整说明](https://github.com/xsy-tech/erp-agent-skills/blob/main/docs/installation.md#直接运行-codex-或-claude)。
 
 ## 连接 WorkBuddy
 

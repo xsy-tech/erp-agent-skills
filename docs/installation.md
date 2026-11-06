@@ -2,11 +2,13 @@
 
 中文 | [English](installation.en.md)
 
+> 版本说明：下文“安装后直接启动”的持久化鉴权模式属于 v0.1.2 安装器（待发布）。已发布的 v0.1.1 仍使用旧环境变量模式；需要安装包含本次改动的新版本，或从新版源码构建后重新安装集成。现有 Release 不会被替换。
+
 ## 选择安装方式
 
 普通用户优先使用 [GitHub Release](https://github.com/xsy-tech/erp-agent-skills/releases) 的安装包。安装 `erp-skill` 不需要 Go、GitHub CLI、仓库写权限或源码编译。它是 Agent 适配器安装与启动工具，不能代替 Codex、Claude Code 或 WorkBuddy 客户端。
 
-准备好目标客户端、管理员提供的 MCP 地址，以及绑定到你本人 ERP 用户和租户的个人 API Key。Codex / Claude Code 使用系统凭证管理器：macOS Keychain、Windows 凭证管理器、Linux Secret Service。无桌面的 Linux 也必须有可用的 Secret Service 后端，缺失时安装会明确失败。
+准备好目标客户端、管理员提供的 MCP 地址，以及绑定到你本人 ERP 用户和租户的个人 API Key。新版安装器将 Codex / Claude Code 的鉴权写入当前用户的私有 MCP 配置，不再要求系统钥匙串或 Linux Secret Service。旧安装的系统凭证仅作为兼容读取来源。
 
 | 操作系统 | 处理器 | v0.1.1 安装包 |
 | --- | --- | --- |
@@ -124,40 +126,65 @@ try {
 erp-skill doctor $Agent --url $McpUrl
 ```
 
-以上过程使用隐藏输入和标准输入，不把 Key 字面值写进命令参数、聊天记录或配置文件。凭证需要在进程内短暂解密才能传给安装器，安装器随后存入系统凭证管理器。
+以上过程使用隐藏输入和标准输入，不把 Key 写进命令参数或聊天。安装器会将 Key 保存到当前用户的 MCP 私有配置中，用于客户端直接连接；配置文件不要提交到仓库或共享。
 
 ### 启动新会话
 
-安装并验证后退出原来的 Agent 会话，在终端执行：
+安装后重启客户端，之后照常使用：
 
 ```bash
-erp-skill launch codex
+codex
 # 或：
-erp-skill launch claude-code
+claude
 ```
 
-Codex 配置中的凭证变量名为 `ERP_OPEN_CODEX_KEY`；Claude Code 配置使用 `${ERP_OPEN_CLAUDE_KEY}`。`launch` 从系统凭证管理器读取 Key 并注入子进程，所以直接打开另一个普通客户端进程不一定能获得这些变量。若当前就在 Agent 中操作，应由用户退出后启动，不要让 Agent 嵌套启动一个交互会话。
-
-安装器会安装共享 Skill 和 `references/`，并通过客户端自身命令注册 MCP。安装完成后请重启 Agent 或重连 MCP，使用当前会话的 `tools/list` 确认可见工具。
+也可以直接打开使用同一用户配置的本地桌面 Code 会话。正在运行的客户端需要重新连接 MCP 或重启，才能重新读取已保存的配置。无需给终端设置 ERP Key 环境变量，也无需让 Agent 嵌套启动交互进程。
 
 ## 直接运行 codex 或 claude
 
-MCP 的 `initialize` 是一次协议握手，本身不会安装 Skill，也不会保存客户端配置。下面说明以成功执行 `erp-skill install codex` 或 `erp-skill install claude-code` 为前提。
+新版 `erp-skill install` 会安装共享 Skill，并将 URL 和鉴权请求头持久化到用户级配置：
 
-| 项目 | 新启动的 codex / claude 进程 | erp-skill launch |
+| 客户端 | 配置位置 | 鉴权字段 |
 | --- | --- | --- |
-| 已安装的 ERP Skill | 可由客户端发现，相关请求触发后按需读取正文。 | 使用同一份已安装的 Skill。 |
-| 已注册的 erp-open MCP 配置 | 客户端按自身设置和版本读取。 | 使用同一份持久化配置。 |
-| 安装时保存在系统凭证管理器的 ERP Key | 不会调用本项目的凭证读取器。 | 读取 Key，只注入所启动的 Agent 子进程。 |
-| 已鉴权的 ERP 工具调用 | 要求进程已获得对应环境变量，且凭证有效。 | 使用已保存凭证，仍需端点可达且服务端授权有效。 |
+| Codex CLI / 同一配置下的本地 Codex 桌面 | `$CODEX_HOME/config.toml`，默认 `~/.codex/config.toml` | `mcp_servers.erp-open.http_headers.Authorization` |
+| Claude Code CLI / 本地桌面 Code 会话 | `~/.claude.json`；设置 `CLAUDE_CONFIG_DIR` 时为该目录下 `.claude.json` | `mcpServers.erp-open.headers.Authorization` |
 
-Codex 需要 `ERP_OPEN_CODEX_KEY`，Claude Code 需要 `ERP_OPEN_CLAUDE_KEY`。保存 Key 不会改变父终端的环境变量；运行一次 `launch` 也不会让其他终端或以后独立启动的客户端自动获得 Key。`doctor` 成功同样不会向终端导出凭证。
+Codex 配置形式如下，示例中的 Key 是占位符，真实值由安装器从标准输入接收并写入：
 
-本项目当前将 Codex Skill 安装到 `$CODEX_HOME/skills/erp-open-platform`，未设置时为 `~/.codex/skills/erp-open-platform`；Claude Code 安装到 `~/.claude/skills/erp-open-platform`。Skill 的发现目录和禁用策略可能随客户端版本变化，未显示时应检查当前客户端的 Skill 列表，不能将此说明理解为所有未来版本的兼容承诺。
+```toml
+[mcp_servers.erp-open]
+url = "https://erp-open.example.com/mcp"
+[mcp_servers.erp-open.http_headers]
+Authorization = "Bearer <YOUR_PERSONAL_KEY>"
+```
 
-日常推荐 `erp-skill launch codex` / `erp-skill launch claude-code`。不要为了直接启动而把 Key 明文写进 shell 启动文件或 MCP 配置。本项目没有自动安装 shell alias，也不全局导出凭证。
+Claude Code 的对应形式：
 
-参考：[Codex MCP](https://developers.openai.com/codex/mcp/)、[Codex Skills](https://developers.openai.com/codex/skills/)、[Claude Code MCP](https://code.claude.com/docs/en/mcp)、[Claude Code Skills](https://code.claude.com/docs/en/skills)。安装路径和系统凭证行为以上述项目实现为准。
+```json
+{
+  "mcpServers": {
+    "erp-open": {
+      "type": "http",
+      "url": "https://erp-open.example.com/mcp",
+      "headers": { "Authorization": "Bearer <YOUR_PERSONAL_KEY>" }
+    }
+  }
+}
+```
+
+这些是用户级私有文件，不写进项目 `.mcp.json` 或 Git 仓库；Unix 文件权限设为 `0600`，Windows 使用用户目录的访问控制。更新只修改 `erp-open`，保留其他服务与设置。安装器不会把 Key 交给客户端命令行参数，也不会在输出中展示它。检测到无效配置时会停止，避免覆盖现有文件。
+
+同一账户下重启客户端后，MCP 可直接读取鉴权；Skill 可被发现，正文按相关请求按需加载。`initialize` 仅是 MCP 握手，本身不会安装 Skill。
+
+Skill 当前安装到 `$CODEX_HOME/skills/erp-open-platform`（默认 `~/.codex/skills/erp-open-platform`）或 `~/.claude/skills/erp-open-platform`；设置 `CLAUDE_CONFIG_DIR` 时，Claude Skill 位于该目录的 `skills/erp-open-platform`。不同版本或禁用策略可能影响发现行为，未显示时应检查客户端设置。
+
+`erp-skill launch codex` / `erp-skill launch claude-code` 保留为兼容入口。`doctor` 和 `launch` 优先读取持久化配置中的凭证，找不到时才尝试旧的系统凭证。新版安装无需系统凭证管理器。
+
+**旧版本迁移：** v0.1.1 仍使用 `ERP_OPEN_CODEX_KEY` / `${ERP_OPEN_CLAUDE_KEY}` 和钥匙串，需要原有 `launch` 流程。安装包含此改动的新版本后，按安全输入命令重新执行 `install`；若 Skill 内容冲突，先备份并确认，再使用 `--force`。这会用固定请求头替换旧 ERP 环境变量配置。然后重启客户端。
+
+**桌面范围：** 本节针对读取这些本机配置的 Codex 和 Claude Code 本地 Code 会话。普通 Claude Desktop 聊天界面的配置以及云端会话不同，不能据此保证已接入；其导入和授权应按对应客户端完成。
+
+参考：[Codex MCP](https://developers.openai.com/codex/mcp/)、[Codex 配置参考](https://developers.openai.com/codex/config-reference/)、[Claude Code MCP](https://code.claude.com/docs/en/mcp)、[Claude Code 桌面](https://code.claude.com/docs/en/desktop)。
 
 ## 连接 WorkBuddy
 
@@ -203,11 +230,11 @@ WorkBuddy 请在其界面移除 Connector 和 Token。确认所有客户端都�
 | 下载 404 | 核对版本、平台、文件名和镜像地址；只有正式上传的 Assets 才可下载。 |
 | SHA-256 校验失败 | 停止安装，重新下载匹配版本的包和清单；不要绕过校验。 |
 | Linux 找不到 `shasum` | 固定的 v0.1.1 脚本需要该命令；安装 Perl、改用手动校验，或使用仓库新版脚本。 |
-| 凭证管理器不可用 | 确认 Keychain / 凭证管理器 / Secret Service 可用；不要改为明文保存 Key。 |
+| 旧版凭证管理器不可用 | 旧 v0.1.1 可修复钥匙串；新版安装器使用用户级私有 MCP 配置，无此依赖。 |
 | 提示会覆盖已修改的 Skill / Connector | 先备份并检查已有文件，确认后才使用 `--force`。 |
 | `INSTALLED_AUTHORIZATION_REQUIRED` | 初始化和工具发现成功，但缺少只读的 `get_platform_info` 授权，请联系管理员。 |
-| 直接启动 codex / claude 能看到配置但调用失败 | 优先使用 erp-skill launch；直接启动不会读取本项目保存在系统凭证管理器的 Key。 |
-| Agent 看不到新增工具 | 重连 MCP 或通过 `erp-skill launch` 启动新会话；以 `tools/list` 为准。 |
+| 直接启动客户端但调用失败 | 确认已用新版安装器重新安装并重启客户端，运行 doctor 检查实际结果，核对 Key 是否有效以及配置是否被项目级设置覆盖。 |
+| Agent 看不到新增工具 | 重连 MCP 或正常重启客户端；以 `tools/list` 为准。 |
 | WorkBuddy 只生成了目录 | 还需在客户端导入 Connector、填写 Token 并连接，不能据此认定安装已验证。 |
 
 另见[安装提示词](agent-install-prompts.md)、[Agent 使用说明](agent-usage.md)及[错误处理](../references/errors.md)。

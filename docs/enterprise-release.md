@@ -27,7 +27,7 @@ make build
 ```bash
 make release
 # 或明确核对将要发布的源码版本：
-make release VERSION=0.1.1
+make release VERSION=0.1.2
 ```
 
 发布前需要：
@@ -76,12 +76,16 @@ https://github.com/xsy-tech/erp-agent-skills/releases/download/v0.1.1/erp-agent-
 
 按用户和环境分别签发 Key，绑定正确的 ERP 用户、租户与最小必需能力，不要多人共用或将 Key 打进 Connector 包。
 
-Codex / Claude Code 使用操作系统凭证管理器：macOS Keychain、Windows 凭证管理器、Linux Secret Service。无桌面的 Linux 也需要可用后端；失败时应给出可操作错误，不能回退到明文文件。WorkBuddy 用户在客户端 Token 界面填写 Key。
+新版 Codex / Claude Code 安装将 Key 持久化到当前用户的私有 MCP 配置，Unix 文件权限为 0600；不得将这些文件打进制品、提交仓库或放进共享项目配置。安装器不通过进程参数传递 Key，新安装无需系统凭证管理器。旧钥匙串记录仅用于兼容读取；WorkBuddy 仍在客户端 Token 界面填写 Key。
 
 开放平台记录 Client、API Key 标识、绑定用户、租户、Capability、协议、请求 ID、结果与耗时。发布维护者保留制品校验值、Tag/提交、推广分组和回退记录；日志和支持材料不得包含 Key 明文。
 
 ## 回退与凭证事件
 
-回退到上一个已验证的版本包，并重新安装相应集成。回退 Skill 不会改变服务端能力授权；个人 Key 仍由系统凭证管理器或客户端 Token 界面管理。
+回退到上一个已验证的版本包，并重新安装相应集成。回退 Skill 不会改变服务端能力授权；个人 Key 由新版用户级 MCP 配置或 WorkBuddy Token 界面管理；旧版本可能仍读取系统凭证。回退前应核对相应版本的鉴权方式。
 
 凭证疑似泄露时先在开放平台吊销 Key，检查审计记录，再按需要签发新 Key。本地卸载不能代替服务端吊销。
+
+## 持久化鉴权迁移验证
+
+发布包含本次改动的新版本后，需验证升级时替换旧环境变量配置、直接 CLI 启动与本地桌面 Code 会话读取用户配置，以及 Key 轮换、卸载、配置权限和其他 MCP 条目的保留。CLI 配置读取通过不等于桌面客户端已完成实际界面验证，报告中应区分二者。

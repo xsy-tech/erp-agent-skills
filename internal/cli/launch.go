@@ -26,7 +26,7 @@ func (a *App) runLaunch(ctx context.Context, args []string) error {
 	if err != nil {
 		return err
 	}
-	secret, err := a.Credentials.Get(agent, endpoint)
+	secret, err := a.storedCredential(agent, endpoint)
 	if err != nil {
 		return err
 	}

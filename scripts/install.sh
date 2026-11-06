@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-version=${ERP_SKILL_VERSION:-0.1.1}
+version=${ERP_SKILL_VERSION:-0.1.2}
 base_url=${ERP_SKILL_RELEASE_BASE_URL:-"https://github.com/xsy-tech/erp-agent-skills/releases/download/v$version"}
 install_dir=${ERP_SKILL_INSTALL_DIR:-"$HOME/.local/bin"}
 

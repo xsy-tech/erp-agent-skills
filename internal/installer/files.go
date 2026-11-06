@@ -11,8 +11,8 @@ import (
 	"github.com/go-saas/erp-agent-skill/internal/assets"
 )
 
-func InstallSkill(agent, homeDir, codexHome string, force bool) error {
-	destination, err := skillDirectory(agent, homeDir, codexHome)
+func InstallSkill(agent, homeDir, codexHome string, force bool, claudeConfigDir ...string) error {
+	destination, err := skillDirectory(agent, homeDir, codexHome, claudeConfigDir...)
 	if err != nil {
 		return err
 	}
@@ -43,8 +43,8 @@ func InstallSkill(agent, homeDir, codexHome string, force bool) error {
 	return nil
 }
 
-func UninstallSkill(agent, homeDir, codexHome string) error {
-	destination, err := skillDirectory(agent, homeDir, codexHome)
+func UninstallSkill(agent, homeDir, codexHome string, claudeConfigDir ...string) error {
+	destination, err := skillDirectory(agent, homeDir, codexHome, claudeConfigDir...)
 	if err != nil {
 		return err
 	}
@@ -89,7 +89,7 @@ func UninstallSkill(agent, homeDir, codexHome string) error {
 	return os.RemoveAll(destination)
 }
 
-func skillDirectory(agent, homeDir, codexHome string) (string, error) {
+func skillDirectory(agent, homeDir, codexHome string, claudeConfigDir ...string) (string, error) {
 	switch agent {
 	case "codex":
 		if codexHome == "" {
@@ -97,6 +97,9 @@ func skillDirectory(agent, homeDir, codexHome string) (string, error) {
 		}
 		return filepath.Join(codexHome, "skills", "erp-open-platform"), nil
 	case "claude-code":
+		if len(claudeConfigDir) > 0 && claudeConfigDir[0] != "" {
+			return filepath.Join(claudeConfigDir[0], "skills", "erp-open-platform"), nil
+		}
 		return filepath.Join(homeDir, ".claude", "skills", "erp-open-platform"), nil
 	default:
 		return "", fmt.Errorf("unsupported local agent %q", agent)

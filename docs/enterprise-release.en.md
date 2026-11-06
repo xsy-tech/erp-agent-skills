@@ -27,7 +27,7 @@ make build
 ```bash
 make release
 # Or explicitly assert the expected source version:
-make release VERSION=0.1.1
+make release VERSION=0.1.2
 ```
 
 Before publishing:
@@ -67,18 +67,22 @@ Provide parallel Chinese and English user guides with language-switch links. Kee
 
 Prefer prebuilt packages and one-command installation, followed by manual downloads and then source builds. Agent prompts should specify version selection, platform detection, checksums, safe credential entry, reconnecting, and truthful completion criteria.
 
-When documenting startup, distinguish discovering installed files from obtaining a credential. Bare client commands do not invoke this project's keyring loader; recommend `erp-skill launch` rather than storing Keys in shell profiles.
+Document persistent user-level authentication as the newer installer’s default. Users restart the client and run codex / claude normally or open a local desktop Code session using the same configuration. The launcher remains a compatibility option; published v0.1.1 still uses its legacy credential flow.
 
 ## Personal Keys and auditing
 
 Issue separate Keys per user and environment, bound to the correct ERP identity, tenant, and minimum capabilities. Do not share Keys or embed them in Connector packages.
 
-Codex / Claude Code use macOS Keychain, Windows Credential Manager, or Linux Secret Service. Headless hosts need an available backend. Credential-manager errors must be actionable and must not cause plaintext fallback. WorkBuddy users enter Keys in its Token UI.
+New Codex / Claude Code installations persist the Key in private user-level MCP configuration with Unix mode 0600. Never package these files, commit them, or store them in shared project configuration. The installer does not pass Keys through process arguments, and new installations need no OS keyring. Existing keyring entries are read only for compatibility. WorkBuddy users still enter Keys in its Token UI.
 
 ERP Open Platform audits Client, Key identifier, bound user, tenant, capability, protocol, request ID, outcome, and duration. Maintainers retain checksums, tag/commit identity, rollout groups, and rollback records. Logs and support material must not contain Key secrets.
 
 ## Rollback and credential incidents
 
-Reinstall a previous verified version and its integration. Rolling back a Skill does not change server authorization; credentials remain managed by the OS or WorkBuddy Token UI.
+Reinstall a previous verified version and its integration. Rolling back a Skill does not change server authorization; credentials are managed by the newer private user configuration or WorkBuddy Token UI. Older releases may still need keyring credentials, so check the target version’s authentication flow before rolling back.
 
 For suspected compromise, revoke the Key in ERP Open Platform first, inspect audit records, and issue a replacement as appropriate. Local uninstall is not server-side revocation.
+
+## Persistent-authentication release verification
+
+Verify replacement of legacy environment-variable registration, direct CLI startup, and local desktop Code sessions using user configuration. Cover Key rotation, uninstall, private file permissions, and preservation of unrelated MCP settings. CLI configuration-read checks do not prove actual desktop UI behavior; report those validation scopes separately.

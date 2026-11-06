@@ -24,17 +24,18 @@ type Doctor interface {
 type Launcher func(context.Context, string, []string, string, string) error
 
 type App struct {
-	Version     string
-	In          io.Reader
-	Out         io.Writer
-	Err         io.Writer
-	HomeDir     string
-	CodexHome   string
-	Credentials credential.Store
-	Profiles    profile.Store
-	Doctor      Doctor
-	Commands    installer.CommandRunner
-	Launch      Launcher
+	Version         string
+	In              io.Reader
+	Out             io.Writer
+	Err             io.Writer
+	HomeDir         string
+	CodexHome       string
+	ClaudeConfigDir string
+	Credentials     credential.Store
+	Profiles        profile.Store
+	Doctor          Doctor
+	Commands        installer.CommandRunner
+	Launch          Launcher
 }
 
 func NewDefault(version string) (*App, error) {
@@ -47,17 +48,18 @@ func NewDefault(version string) (*App, error) {
 		return nil, fmt.Errorf("resolve user config directory: %w", err)
 	}
 	return &App{
-		Version:     version,
-		In:          os.Stdin,
-		Out:         os.Stdout,
-		Err:         os.Stderr,
-		HomeDir:     home,
-		CodexHome:   os.Getenv("CODEX_HOME"),
-		Credentials: credential.NewOSStore(),
-		Profiles:    profile.NewFileStore(filepath.Join(configDirectory, "erp-agent-skill", "profiles.json")),
-		Doctor:      mcpclient.New(),
-		Commands:    execCommandRunner{},
-		Launch:      secureRunner.Run,
+		Version:         version,
+		In:              os.Stdin,
+		Out:             os.Stdout,
+		Err:             os.Stderr,
+		HomeDir:         home,
+		CodexHome:       os.Getenv("CODEX_HOME"),
+		ClaudeConfigDir: os.Getenv("CLAUDE_CONFIG_DIR"),
+		Credentials:     credential.NewOSStore(),
+		Profiles:        profile.NewFileStore(filepath.Join(configDirectory, "erp-agent-skill", "profiles.json")),
+		Doctor:          mcpclient.New(),
+		Commands:        execCommandRunner{},
+		Launch:          secureRunner.Run,
 	}, nil
 }
 
@@ -86,6 +88,8 @@ func (a *App) Run(ctx context.Context, args []string) error {
 func (a *App) writeHelp() {
 	fmt.Fprintln(a.Out, `erp-skill 用于安装、验证和启动 ERP 开放平台的 Agent 集成。
 Install, verify, and launch ERP Open Platform agent integrations.
+安装会保存用户级 MCP 鉴权配置；重启后照常使用客户端。
+Installation saves user-level MCP authentication; restart and use your client normally.
 
 命令 / Commands:
   install codex|claude-code --url URL --key-stdin [--force]
@@ -106,7 +110,7 @@ func readSecret(reader io.Reader) (string, error) {
 	if secret == "" {
 		return "", errors.New("API key from stdin is empty")
 	}
-	if strings.ContainsRune(secret, '\x00') {
+	if strings.ContainsAny(secret, "\x00\r\n") {
 		return "", errors.New("API key from stdin is invalid")
 	}
 	return secret, nil
@@ -133,12 +137,16 @@ func (execCommandRunner) Run(ctx context.Context, name string, args ...string) e
 	return command.Run()
 }
 
-func restoreCredential(store credential.Store, agent, endpoint, previous string, existed bool) {
-	if existed {
-		_ = store.Set(agent, endpoint, previous)
-		return
+func (a *App) clientConfig() installer.ClientConfig {
+	return installer.ClientConfig{HomeDir: a.HomeDir, CodexHome: a.CodexHome, ClaudeConfigDir: a.ClaudeConfigDir}
+}
+
+func (a *App) storedCredential(agent, endpoint string) (string, error) {
+	secret, err := a.clientConfig().Credential(agent, endpoint)
+	if errors.Is(err, installer.ErrConfigCredentialNotFound) {
+		return a.Credentials.Get(agent, endpoint)
 	}
-	_ = store.Delete(agent, endpoint)
+	return secret, err
 }
 
 func restoreProfile(store profile.Store, agent, previous string, existed bool) {

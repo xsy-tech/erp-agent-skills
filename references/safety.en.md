@@ -12,7 +12,7 @@ Obtain explicit confirmation immediately before destructive, financial, posting,
 
 ## Sensitive information
 
-Never print, log, include in summaries, or write to generated files:
+Never expose in chat, logs, business summaries, source code, or shared generated files:
 
 - API Keys or Authorization headers.
 - Upstream service credentials.
@@ -22,3 +22,5 @@ Never print, log, include in summaries, or write to generated files:
 ## Result integrity
 
 Do not infer successful writes from interrupted or timed-out responses. Read the current state first; retry with the same idempotency key only when the tool contract permits it.
+
+An authorized installer may save a personal Key in private user-level MCP configuration for authentication. This does not authorize putting credentials in chat, repositories, shared project configuration, or business documents.

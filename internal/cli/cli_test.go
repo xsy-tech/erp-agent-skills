@@ -132,15 +132,17 @@ func TestInstallCodexValidatesStoresAndRegisters(t *testing.T) {
 	if err := app.Run(t.Context(), []string{"install", "codex", "--url", endpoint, "--key-stdin"}); err != nil {
 		t.Fatal(err)
 	}
-	if credentials.values["codex|"+endpoint] != "personal-secret" {
-		t.Fatal("credential was not stored")
+	if len(credentials.values) != 0 {
+		t.Fatal("new installation should not require an OS credential-manager copy")
 	}
 	if profiles.values["codex"] != endpoint {
 		t.Fatal("endpoint profile was not stored")
 	}
-	wantArgs := []string{"mcp", "add", "erp-open", "--url", endpoint, "--bearer-token-env-var", "ERP_OPEN_CODEX_KEY"}
-	if commands.name != "codex" || !reflect.DeepEqual(commands.args, wantArgs) {
-		t.Fatalf("registration command = %s %v", commands.name, commands.args)
+	if commands.name != "" || len(commands.args) != 0 {
+		t.Fatal("registration must write private configuration without command-line credentials")
+	}
+	if secret, err := app.clientConfig().Credential("codex", endpoint); err != nil || secret != "personal-secret" {
+		t.Fatal("persistent MCP credential was not installed")
 	}
 }
 

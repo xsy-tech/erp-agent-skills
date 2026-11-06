@@ -31,7 +31,7 @@ help:
 	  'make dist           生成全部五个平台的安装包 / Package all five platforms' \
 	  'make release-check  本地检查、打包并验证 SHA-256 / Check, package, verify' \
 	  'make release        按源码版本构建并发布 GitHub Release / Publish source version' \
-	  '                    可选 / Optional: VERSION=0.1.1 REPO=xsy-tech/erp-agent-skills' \
+	  '                    可选 / Optional: VERSION=0.1.2 REPO=xsy-tech/erp-agent-skills' \
 	  'make clean          清理 bin/ 和 dist/ / Remove build output'
 
 clean:

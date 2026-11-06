@@ -32,9 +32,9 @@ MCP `initialize` is a protocol handshake. It does not by itself install the shar
 
 `erp-skill install` installs the Skill and persists MCP registration. Starting the same locally configured client under the same user makes that configuration discoverable. The Skill's full instructions are activated when relevant, rather than necessarily applied to every request.
 
-Bare `codex` or `claude` does not run this project's OS credential-manager loader. Unless the new process already has the matching `ERP_OPEN_CODEX_KEY` / `ERP_OPEN_CLAUDE_KEY`, discovering the MCP configuration is insufficient for authenticated ERP access. Installing or running `doctor` does not export these variables to the terminal.
+The newer installer saves the URL and Authorization credential in private user-level MCP configuration. Restart the client, then run codex / claude normally, or use a local desktop Code session reading the same configuration. Skill instructions are still loaded on demand.
 
-Use `erp-skill launch codex` or `erp-skill launch claude-code` in a terminal for routine startup. It reads the saved Key and injects it only into the child process. A separate terminal or later bare client process does not inherit that injection. See the [startup FAQ](installation.en.md#starting-codex-or-claude-directly).
+Doctor reads the same persistent credential first; erp-skill launch remains a compatibility option. New installations do not require an OS keyring or Secret Service. Published v0.1.1 does not contain this change and still needs its original launcher flow; reinstall the integration after upgrading to migrate. See the [startup guide](installation.en.md#starting-codex-or-claude-directly). Ordinary Claude Desktop chat and cloud sessions have different configuration entry points.
 
 WorkBuddy requires importing the generated Connector, entering the Key in its Token UI, and connecting MCP. It does not use `launch`; generating a directory alone is not a completed connection.
 
