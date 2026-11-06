@@ -2,21 +2,21 @@
 
 [中文](installation.md) | English
 
-> Version note: persistent authentication and direct startup below describe the v0.1.2 installer (not yet published). Published v0.1.1 still uses the legacy environment-variable flow. Install a release containing this change, or build the newer source and reinstall the integration. Existing release assets are not replaced.
+> v0.1.2 supports persistent authentication: install the integration, restart your client, and use it normally. Upgrade and reinstall integrations from legacy v0.1.1; existing release assets remain unchanged.
 
 ## Choose an installation method
 
 Use the [prebuilt Release packages](https://github.com/xsy-tech/erp-agent-skills/releases) for ordinary installations. You do not need Go, GitHub CLI, repository write access, or source compilation. Install Codex, Claude Code, or WorkBuddy separately; `erp-skill` configures and launches integrations, rather than replacing an agent client.
 
-Obtain the MCP URL and a personal API Key bound to the correct ERP user and tenant. The newer installer persists authentication in private user-level Codex / Claude Code configuration. It no longer requires an OS keyring or Linux Secret Service. Old keyring entries are read only for compatibility when a persistent credential is unavailable.
+Obtain the MCP URL and a personal API Key bound to the correct ERP user and tenant. The v0.1.2 installer persists authentication in private user-level Codex / Claude Code / WorkBuddy configuration. It no longer requires an OS keyring or Linux Secret Service. Old keyring entries are read only for compatibility when a persistent credential is unavailable.
 
-| OS | Processor | v0.1.1 package |
+| OS | Processor | v0.1.2 package |
 | --- | --- | --- |
-| macOS | Intel | `erp-agent-skill_0.1.1_darwin_amd64.tar.gz` |
-| macOS | Apple Silicon | `erp-agent-skill_0.1.1_darwin_arm64.tar.gz` |
-| Linux | Intel / AMD 64-bit | `erp-agent-skill_0.1.1_linux_amd64.tar.gz` |
-| Linux | ARM 64-bit | `erp-agent-skill_0.1.1_linux_arm64.tar.gz` |
-| Windows | x64 | `erp-agent-skill_0.1.1_windows_amd64.zip` |
+| macOS | Intel | `erp-agent-skill_0.1.2_darwin_amd64.tar.gz` |
+| macOS | Apple Silicon | `erp-agent-skill_0.1.2_darwin_arm64.tar.gz` |
+| Linux | Intel / AMD 64-bit | `erp-agent-skill_0.1.2_linux_amd64.tar.gz` |
+| Linux | ARM 64-bit | `erp-agent-skill_0.1.2_linux_arm64.tar.gz` |
+| Windows | x64 | `erp-agent-skill_0.1.2_windows_amd64.zip` |
 
 These packages contain the CLI; they are not directly importable WorkBuddy Connectors. The newer installer configures WorkBuddy MCP and Skill directly; generating a Connector is needed only for the optional distribution flow.
 
@@ -27,10 +27,10 @@ These packages contain the CLI; they are not directly importable WorkBuddy Conne
 Run in Bash or Zsh:
 
 ```bash
-set -o pipefail && curl -fsSL https://raw.githubusercontent.com/xsy-tech/erp-agent-skills/v0.1.1/scripts/install.sh | ERP_SKILL_RELEASE_BASE_URL=https://github.com/xsy-tech/erp-agent-skills/releases/download/v0.1.1 bash && export PATH="$HOME/.local/bin:$PATH" && erp-skill version
+set -o pipefail && curl -fsSL https://raw.githubusercontent.com/xsy-tech/erp-agent-skills/v0.1.2/scripts/install.sh | ERP_SKILL_RELEASE_BASE_URL=https://github.com/xsy-tech/erp-agent-skills/releases/download/v0.1.2 bash && export PATH="$HOME/.local/bin:$PATH" && erp-skill version
 ```
 
-The pinned script detects the OS and architecture, downloads the archive and `checksums.txt`, and installs only after verification. It requires Bash, `curl`, `tar`, and `shasum`; Perl commonly provides `shasum` on Linux. If you have only `sha256sum`, use the newer repository script or the manual procedure below.
+The pinned script detects the OS and architecture, downloads the archive and `checksums.txt`, and installs only after verification. It requires Bash, `curl`, `tar`, and either `sha256sum` or `shasum`.
 
 For future terminals, add this to your `~/.zshrc` or `~/.bashrc` and reopen the terminal:
 
@@ -43,7 +43,7 @@ export PATH="$HOME/.local/bin:$PATH"
 Run in PowerShell:
 
 ```powershell
-$ErrorActionPreference = 'Stop'; & ([scriptblock]::Create((Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/xsy-tech/erp-agent-skills/v0.1.1/scripts/install.ps1').Content)) -Version '0.1.1' -BaseUrl 'https://github.com/xsy-tech/erp-agent-skills/releases/download/v0.1.1'; $env:Path = "$HOME\.local\bin;$env:Path"; erp-skill version
+$ErrorActionPreference = 'Stop'; & ([scriptblock]::Create((Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/xsy-tech/erp-agent-skills/v0.1.2/scripts/install.ps1').Content)) -Version '0.1.2' -BaseUrl 'https://github.com/xsy-tech/erp-agent-skills/releases/download/v0.1.2'; $env:Path = "$HOME\.local\bin;$env:Path"; erp-skill version
 ```
 
 The script verifies SHA-256 before installing into `$HOME\.local\bin`. Add that directory to your user Path in Windows Environment Variables and reopen the terminal for persistent access.
@@ -55,34 +55,34 @@ After downloading or checking out the repository:
 ```bash
 bash scripts/install.sh
 # Explicitly choose an already published version:
-ERP_SKILL_VERSION=0.1.1 bash scripts/install.sh
+ERP_SKILL_VERSION=0.1.2 bash scripts/install.sh
 # Organization mirror and custom destination:
-ERP_SKILL_VERSION=0.1.1 ERP_SKILL_RELEASE_BASE_URL=https://downloads.example.com/erp/v0.1.1 ERP_SKILL_INSTALL_DIR="$HOME/.local/bin" bash scripts/install.sh
+ERP_SKILL_VERSION=0.1.2 ERP_SKILL_RELEASE_BASE_URL=https://downloads.example.com/erp/v0.1.2 ERP_SKILL_INSTALL_DIR="$HOME/.local/bin" bash scripts/install.sh
 ```
 
 ```powershell
 & .\scripts\install.ps1
-& .\scripts\install.ps1 -Version '0.1.1' -BaseUrl 'https://downloads.example.com/erp/v0.1.1' -InstallDir "$HOME\.local\bin"
+& .\scripts\install.ps1 -Version '0.1.2' -BaseUrl 'https://downloads.example.com/erp/v0.1.2' -InstallDir "$HOME\.local\bin"
 ```
 
 The newer scripts default to the official GitHub Release URL. The shell script prefers `sha256sum`, with `shasum` as a fallback. Replace example mirror URLs with real ones; archive versions and checksum manifests must agree.
 
 ## Manual installation
 
-Download the matching archive and `checksums.txt` from [v0.1.1 Assets](https://github.com/xsy-tech/erp-agent-skills/releases/tag/v0.1.1).
+Download the matching archive and `checksums.txt` from [v0.1.2 Assets](https://github.com/xsy-tech/erp-agent-skills/releases/tag/v0.1.2).
 
 For Apple Silicon, calculate the hash and compare it with the matching manifest entry:
 
 ```bash
-shasum -a 256 erp-agent-skill_0.1.1_darwin_arm64.tar.gz
+shasum -a 256 erp-agent-skill_0.1.2_darwin_arm64.tar.gz
 ```
 
 Linux can use `sha256sum <archive>`. Do not check the entire manifest when you have downloaded only one archive; the manifest lists other platforms too. After the matching hash is verified:
 
 ```bash
-tar -xzf erp-agent-skill_0.1.1_darwin_arm64.tar.gz
+tar -xzf erp-agent-skill_0.1.2_darwin_arm64.tar.gz
 mkdir -p "$HOME/.local/bin"
-install -m 0755 erp-agent-skill_0.1.1_darwin_arm64/erp-skill "$HOME/.local/bin/erp-skill"
+install -m 0755 erp-agent-skill_0.1.2_darwin_arm64/erp-skill "$HOME/.local/bin/erp-skill"
 export PATH="$HOME/.local/bin:$PATH"
 erp-skill version
 ```
@@ -188,7 +188,7 @@ Sources: [Codex MCP](https://developers.openai.com/codex/mcp/), [Codex configura
 
 ### Default: install MCP and Skill directly (v0.1.2)
 
-This feature belongs to v0.1.2, which is not yet published. Published v0.1.1 exports Connectors only. Use a release containing this feature, or build the newer source before running these commands.
+This feature is available from v0.1.2; legacy v0.1.1 exports Connectors only. Install the v0.1.2 prebuilt package described above before running these commands.
 
 In Bash (enter bash first if your shell is Zsh), replace the endpoint:
 
@@ -254,7 +254,7 @@ For direct installation, run `erp-skill uninstall workbuddy --url <real-MCP-URL>
 | Command not found | Add the installation directory to PATH or use its absolute path. |
 | Download returns 404 | Check the published version, platform, filename, and mirror. |
 | Checksum mismatch | Stop; redownload the matching archive and manifest. Do not bypass verification. |
-| shasum missing on Linux | The pinned v0.1.1 script needs it; install Perl, verify manually, or use the newer repository script. |
+| Checksum utility missing on Linux | v0.1.2 supports `sha256sum` or `shasum`; install at least one. Legacy v0.1.1 supports only `shasum`. |
 | Legacy credential manager unavailable | Repair it for v0.1.1, or migrate to the newer installer, which uses private user configuration. |
 | Existing files differ | Back them up and inspect them before using --force. |
 | INSTALLED_AUTHORIZATION_REQUIRED | Ask an administrator to authorize read-only get_platform_info. |

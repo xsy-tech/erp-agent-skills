@@ -36,7 +36,7 @@ The newer installer saves the URL and Authorization credential in private user-l
 
 Doctor reads the same persistent credential first; erp-skill launch remains a compatibility option. New installations do not require an OS keyring or Secret Service. Published v0.1.1 does not contain this change and still needs its original launcher flow; reinstall the integration after upgrading to migrate. See the [startup guide](installation.en.md#starting-codex-or-claude-directly). Ordinary Claude Desktop chat and cloud sessions have different configuration entry points.
 
-WorkBuddy v0.1.2 (not yet published) installs directly into ~/.workbuddy/mcp.json and ~/.workbuddy/skills/erp-open-platform. Restart or reconnect after credentials are saved; no launcher is needed. Connector export is optional with --output and separately requires UI import and Token setup. Legacy v0.1.1 supports export only.
+WorkBuddy v0.1.2 installs directly into ~/.workbuddy/mcp.json and ~/.workbuddy/skills/erp-open-platform. Restart or reconnect after credentials are saved; no launcher is needed. Connector export is optional with --output and separately requires UI import and Token setup. Legacy v0.1.1 supports export only.
 
 ## Verification results
 

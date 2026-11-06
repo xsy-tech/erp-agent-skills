@@ -40,7 +40,7 @@ MCP `initialize` 是握手，不会自动安装 Skill。执行 `erp-skill instal
 
 `doctor` 优先读取同一份持久化凭证；`erp-skill launch` 仅保留为兼容入口。新安装不再要求系统钥匙串或 Secret Service。旧 v0.1.1 尚未包含此改动，仍需其原有启动流程，升级后重新安装集成即可迁移。详见[直接启动说明](installation.md#直接运行-codex-或-claude)。普通 Claude 桌面聊天客户端和云端会话不属于同一个配置入口。
 
-WorkBuddy 的 v0.1.2（待发布）默认直接安装到 `~/.workbuddy/mcp.json` 和 `~/.workbuddy/skills/erp-open-platform`，保存鉴权后重启或重连即可，不使用 `erp-skill launch`。Connector 仅为带 `--output` 的可选导出方式，导出后才需界面导入及 Token 配置；旧 v0.1.1 仍只有导出模式。
+WorkBuddy 的 v0.1.2 默认直接安装到 `~/.workbuddy/mcp.json` 和 `~/.workbuddy/skills/erp-open-platform`，保存鉴权后重启或重连即可，不使用 `erp-skill launch`。Connector 仅为带 `--output` 的可选导出方式，导出后才需界面导入及 Token 配置；旧 v0.1.1 仍只有导出模式。
 
 ## 验证结果说明
 
