@@ -1,5 +1,7 @@
 # Agent 使用说明
 
+中文 | [English](agent-usage.en.md)
+
 首次使用先按[安装指南](installation.md)安装预编译包并配置客户端，也可以复制[安装提示词](agent-install-prompts.md)让 Agent 协助。支持 Codex、Claude Code 和 WorkBuddy。
 
 ## Agent 如何知道可以做什么
@@ -14,7 +16,7 @@ Agent 不能根据文档猜测一个当前连接中不存在的工具。实际�
 
 ## 用中文描述业务目标
 
-不需要猜测工具名，直接描述需要完成的事情：
+可以使用中文或英文，Agent 应按你的语言解释业务结果。不需要猜测工具名，直接描述需要完成的事情：
 
 - “搜索姓名包含张学的员工，并列出工号和部门。”
 - “先查询订单当前状态，再告诉我是否可以提交。”
@@ -31,6 +33,10 @@ Agent 不能根据文档猜测一个当前连接中不存在的工具。实际�
 Key 绑定的 ERP 用户和租户在开放平台管理端确定，工具参数不能切换该身份。下游 ERP 服务仍会校验业务权限和数据范围。
 
 ## 连接与启动
+
+MCP `initialize` 是握手，不会自动安装 Skill。执行 `erp-skill install` 才会安装本地 Skill 和注册 MCP。新客户端会话可以发现这些配置，但 Skill 正文只在需要时加载，不表示所有请求都强制应用 ERP 规则。
+
+直接运行 `codex` / `claude` 不会调用本项目的系统凭证读取器。除非该进程已获得 `ERP_OPEN_CODEX_KEY` / `ERP_OPEN_CLAUDE_KEY`，否则发现 MCP 配置不代表能够完成 ERP 鉴权；安装和 `doctor` 都不会向父终端导出 Key。详见[直接启动说明](installation.md#直接运行-codex-或-claude)。
 
 Codex 和 Claude Code 完成安装后，应从终端运行 `erp-skill launch codex` 或 `erp-skill launch claude-code` 启动新会话。启动器从系统凭证管理器取出 Key，只注入目标子进程。
 

@@ -1,5 +1,7 @@
 # 安装、升级与故障排查
 
+中文 | [English](installation.en.md)
+
 ## 选择安装方式
 
 普通用户优先使用 [GitHub Release](https://github.com/xsy-tech/erp-agent-skills/releases) 的安装包。安装 `erp-skill` 不需要 Go、GitHub CLI、仓库写权限或源码编译。它是 Agent 适配器安装与启动工具，不能代替 Codex、Claude Code 或 WorkBuddy 客户端。
@@ -138,6 +140,25 @@ Codex 配置中的凭证变量名为 `ERP_OPEN_CODEX_KEY`；Claude Code 配置�
 
 安装器会安装共享 Skill 和 `references/`，并通过客户端自身命令注册 MCP。安装完成后请重启 Agent 或重连 MCP，使用当前会话的 `tools/list` 确认可见工具。
 
+## 直接运行 codex 或 claude
+
+MCP 的 `initialize` 是一次协议握手，本身不会安装 Skill，也不会保存客户端配置。下面说明以成功执行 `erp-skill install codex` 或 `erp-skill install claude-code` 为前提。
+
+| 项目 | 新启动的 codex / claude 进程 | erp-skill launch |
+| --- | --- | --- |
+| 已安装的 ERP Skill | 可由客户端发现，相关请求触发后按需读取正文。 | 使用同一份已安装的 Skill。 |
+| 已注册的 erp-open MCP 配置 | 客户端按自身设置和版本读取。 | 使用同一份持久化配置。 |
+| 安装时保存在系统凭证管理器的 ERP Key | 不会调用本项目的凭证读取器。 | 读取 Key，只注入所启动的 Agent 子进程。 |
+| 已鉴权的 ERP 工具调用 | 要求进程已获得对应环境变量，且凭证有效。 | 使用已保存凭证，仍需端点可达且服务端授权有效。 |
+
+Codex 需要 `ERP_OPEN_CODEX_KEY`，Claude Code 需要 `ERP_OPEN_CLAUDE_KEY`。保存 Key 不会改变父终端的环境变量；运行一次 `launch` 也不会让其他终端或以后独立启动的客户端自动获得 Key。`doctor` 成功同样不会向终端导出凭证。
+
+本项目当前将 Codex Skill 安装到 `$CODEX_HOME/skills/erp-open-platform`，未设置时为 `~/.codex/skills/erp-open-platform`；Claude Code 安装到 `~/.claude/skills/erp-open-platform`。Skill 的发现目录和禁用策略可能随客户端版本变化，未显示时应检查当前客户端的 Skill 列表，不能将此说明理解为所有未来版本的兼容承诺。
+
+日常推荐 `erp-skill launch codex` / `erp-skill launch claude-code`。不要为了直接启动而把 Key 明文写进 shell 启动文件或 MCP 配置。本项目没有自动安装 shell alias，也不全局导出凭证。
+
+参考：[Codex MCP](https://developers.openai.com/codex/mcp/)、[Codex Skills](https://developers.openai.com/codex/skills/)、[Claude Code MCP](https://code.claude.com/docs/en/mcp)、[Claude Code Skills](https://code.claude.com/docs/en/skills)。安装路径和系统凭证行为以上述项目实现为准。
+
 ## 连接 WorkBuddy
 
 ```bash
@@ -185,6 +206,7 @@ WorkBuddy 请在其界面移除 Connector 和 Token。确认所有客户端都�
 | 凭证管理器不可用 | 确认 Keychain / 凭证管理器 / Secret Service 可用；不要改为明文保存 Key。 |
 | 提示会覆盖已修改的 Skill / Connector | 先备份并检查已有文件，确认后才使用 `--force`。 |
 | `INSTALLED_AUTHORIZATION_REQUIRED` | 初始化和工具发现成功，但缺少只读的 `get_platform_info` 授权，请联系管理员。 |
+| 直接启动 codex / claude 能看到配置但调用失败 | 优先使用 erp-skill launch；直接启动不会读取本项目保存在系统凭证管理器的 Key。 |
 | Agent 看不到新增工具 | 重连 MCP 或通过 `erp-skill launch` 启动新会话；以 `tools/list` 为准。 |
 | WorkBuddy 只生成了目录 | 还需在客户端导入 Connector、填写 Token 并连接，不能据此认定安装已验证。 |
 

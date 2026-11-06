@@ -8,12 +8,12 @@ install_dir=${ERP_SKILL_INSTALL_DIR:-"$HOME/.local/bin"}
 case "$(uname -s)" in
   Darwin) os=darwin ;;
   Linux) os=linux ;;
-  *) echo "不支持当前操作系统；Windows 请使用 install.ps1。" >&2; exit 1 ;;
+  *) echo "不支持当前操作系统；Windows 请使用 install.ps1。 / Unsupported OS; use install.ps1 on Windows." >&2; exit 1 ;;
 esac
 case "$(uname -m)" in
   arm64|aarch64) arch=arm64 ;;
   x86_64|amd64) arch=amd64 ;;
-  *) echo "不支持当前处理器架构；仅提供 amd64 和 arm64 安装包。" >&2; exit 1 ;;
+  *) echo "不支持当前处理器架构；仅提供 amd64 和 arm64 安装包。 / Unsupported architecture; amd64 and arm64 only." >&2; exit 1 ;;
 esac
 
 archive="erp-agent-skill_${version}_${os}_${arch}.tar.gz"
@@ -27,10 +27,10 @@ if command -v sha256sum >/dev/null 2>&1; then
 else
   actual=$(shasum -a 256 "$temporary/$archive" | awk '{print $1}')
 fi
-[[ -n "$expected" && "$expected" == "$actual" ]] || { echo "SHA-256 校验失败，已停止安装。" >&2; exit 1; }
+[[ -n "$expected" && "$expected" == "$actual" ]] || { echo "SHA-256 校验失败，已停止安装。 / SHA-256 verification failed; installation stopped." >&2; exit 1; }
 tar -xzf "$temporary/$archive" -C "$temporary"
 mkdir -p "$install_dir"
 install -m 0755 "$temporary/erp-agent-skill_${version}_${os}_${arch}/erp-skill" "$install_dir/erp-skill"
-echo "已安装：$install_dir/erp-skill"
-printf "当前终端加入 PATH：export PATH=\"%s:\$PATH\"\n" "$install_dir"
-echo "下一步：运行 erp-skill version，再按安装指南配置 Codex、Claude Code 或 WorkBuddy。"
+echo "已安装 / Installed: $install_dir/erp-skill"
+printf "当前终端加入 PATH / Add to this terminal PATH: export PATH=\"%s:\$PATH\"\n" "$install_dir"
+echo "下一步 / Next: erp-skill version；然后按安装指南配置客户端 / then follow the installation guide to configure your agent."

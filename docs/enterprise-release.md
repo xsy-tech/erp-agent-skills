@@ -1,5 +1,7 @@
 # 构建、企业分发与 GitHub 发布
 
+中文 | [English](enterprise-release.en.md)
+
 本文面向维护者。普通用户请直接使用[预编译包安装指南](installation.md)，无需安装 Go 或执行构建。
 
 ## 仓库与权限
@@ -18,7 +20,7 @@ make build
 ./bin/erp-skill version
 ```
 
-`make build` 生成本机工具；`make dist` 交叉编译五个平台并生成 `dist/checksums.txt`。`make help` 列出所有入口。
+`make build` 生成本机工具；安装包同时包含 `README.md` 和 `README.en.md`，安装后的 Skill 与 Connector 同时包含中英文参考文档。`make dist` 交叉编译五个平台并生成 `dist/checksums.txt`。`make help` 列出所有入口。
 
 ## 一条命令发布
 
@@ -30,7 +32,7 @@ make release VERSION=0.1.1
 
 发布前需要：
 
-1. 为新版本同步更新 `version.go`、`manifest.json`、`adapters/workbuddy/connector-meta.json`、`scripts/install.sh` 和 `scripts/install.ps1`。同步更新 README、安装指南与提示词中的固定版本和下载地址。
+1. 为新版本同步更新 `version.go`、`manifest.json`、`adapters/workbuddy/connector-meta.json`、`scripts/install.sh` 和 `scripts/install.ps1`。同步更新中英文 README、安装指南与提示词中的固定版本和下载地址。
 2. 执行 `make release-check`，它依次运行测试、`go vet`、五个平台打包和 SHA-256 校验，不会创建 Tag 或 Release。
 3. 检查源码与制品，确认没有凭证；提交并推送全部发布改动。工作区必须干净，包括未跟踪文件。
 4. 安装 GitHub CLI，并使用有仓库写权限的账号执行一次 `gh auth login`。
@@ -66,7 +68,7 @@ https://github.com/xsy-tech/erp-agent-skills/releases/download/v0.1.1/erp-agent-
 
 ## 文档维护约定
 
-所有面向使用者的说明以中文提供，包括 README、`docs/`、共享 `SKILL.md`、`references/`、安装脚本提示和 WorkBuddy 显示字段。命令、API 字段、错误码和环境变量保留原名。新增文档应从 README 导航可达。
+所有面向使用者的说明同时提供中文和英文。保留现有中文入口，使用 `.en.md` 提供英文平行页面并加入语言切换；共享 `SKILL.md` 保持单一可发现入口，正文支持两种语言，`references/` 分别提供中英文。CLI 帮助、安装脚本提示和 WorkBuddy 显示字段同时覆盖两种语言。命令、API 字段、错误码和环境变量保留原名。新增文档应从 README 导航可达。
 
 安装说明优先给出 Release 包和一键安装命令，其次提供手动下载，最后才是源码构建。复制到 Agent 的提示词应说明版本、平台识别、校验、安全输入、客户端重连及真实完成条件。
 

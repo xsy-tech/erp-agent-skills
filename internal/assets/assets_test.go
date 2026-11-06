@@ -21,6 +21,13 @@ func TestSkillBundleIntegrity(t *testing.T) {
 	if !strings.Contains(string(skill), "tools/list") {
 		t.Fatal("SKILL.md must identify tools/list as the runtime authority")
 	}
+	for _, name := range []string{"workflows", "terminology", "safety", "errors"} {
+		for _, suffix := range []string{".md", ".en.md"} {
+			if _, ok := files["references/"+name+suffix]; !ok {
+				t.Errorf("missing installed language resource: references/%s%s", name, suffix)
+			}
+		}
+	}
 
 	linkPattern := regexp.MustCompile(`\]\((references/[^)]+)\)`)
 	for _, match := range linkPattern.FindAllStringSubmatch(string(skill), -1) {

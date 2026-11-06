@@ -1,10 +1,14 @@
 {
   "id": "erp-open-platform",
-  "name": "ERP 开放平台",
-  "description": "通过已授权的 ERP OpenAPI 与 MCP 能力查询和处理业务数据。",
+  "name": "ERP 开放平台 / ERP Open Platform",
+  "description": "通过已授权的 ERP OpenAPI 与 MCP 能力查询和处理业务数据。 Query and operate ERP data through authorized OpenAPI and MCP capabilities.",
   "version": "0.1.1",
   "vendor": "XSN",
   "min_workbuddy_version": "4.23.0",
-  "tags": ["erp", "openapi", "mcp"],
+  "tags": [
+    "erp",
+    "openapi",
+    "mcp"
+  ],
   "auth_mode": "token"
 }

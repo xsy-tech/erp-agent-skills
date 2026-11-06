@@ -1,5 +1,7 @@
 # ERP Agent Skill（中文使用指南）
 
+中文 | [English](README.en.md)
+
 让 Codex、Claude Code 和 WorkBuddy 通过 ERP 开放平台 MCP，使用你获授权的 ERP 业务能力。
 
 **推荐直接安装 GitHub Release 的预编译包，不需要安装 Go、克隆仓库或编译源码。** 当前已发布版本为 [v0.1.1](https://github.com/xsy-tech/erp-agent-skills/releases/tag/v0.1.1)。
@@ -54,6 +56,14 @@ erp-skill launch codex
 
 安装器会安装共享 Skill、注册名为 `erp-open` 的 MCP 服务，并将个人凭证保存到系统凭证管理器。每次使用 `launch`，凭证才会注入所启动的 Agent 进程。Windows 的安全输入命令见[安装指南](https://github.com/xsy-tech/erp-agent-skills/blob/main/docs/installation.md#连接-codex-或-claude-code)。
 
+## 直接运行 codex 或 claude 会加载 ERP 吗？
+
+执行 `erp-skill install` 后，新的本机客户端会话会读取已注册的 MCP 配置，并发现安装好的 ERP Skill；Skill 正文由 Agent 在相关请求中按需加载。
+
+**发现配置不等于完成鉴权。** 直接运行 `codex` 或 `claude` 不会调用本项目的系统凭证读取器，只有进程已经获得对应的 `ERP_OPEN_CODEX_KEY` / `ERP_OPEN_CLAUDE_KEY` 环境变量时，才能使用该凭证连接 ERP。安装和 `doctor` 不会向父终端导出 Key，因此日常推荐使用 `erp-skill launch`。
+
+仅完成 MCP `initialize` 握手不会自动安装 Skill 或持久化客户端配置。[完整说明](https://github.com/xsy-tech/erp-agent-skills/blob/main/docs/installation.md#直接运行-codex-或-claude)区分了这些步骤。
+
 ## 连接 WorkBuddy
 
 ```bash
@@ -74,7 +84,7 @@ erp-skill install workbuddy --url https://erp-open.example.com/mcp --output ./er
 
 `doctor` 返回 `VERIFIED` 表示验证成功；`INSTALLED_AUTHORIZATION_REQUIRED` 表示已完成初始化和工具发现，但缺少 `get_platform_info` 授权，需要联系管理员。验证不会调用具有写入能力的业务工具。
 
-## 中文文档导航
+## 中英文文档导航
 
 - [安装、升级、卸载与故障排查](https://github.com/xsy-tech/erp-agent-skills/blob/main/docs/installation.md)
 - [Codex / Claude Code / WorkBuddy 安装提示词](https://github.com/xsy-tech/erp-agent-skills/blob/main/docs/agent-install-prompts.md)

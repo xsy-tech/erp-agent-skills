@@ -31,7 +31,7 @@ for target in "${targets[@]}"; do
     cd "$root"
     CGO_ENABLED=0 GOOS="$os" GOARCH="$arch" go build -trimpath -buildvcs=false -o "$binary" ./cmd/erp-skill
   )
-  cp "$root/README.md" "$root/LICENSE" "$root/manifest.json" "$package_dir/"
+  cp "$root/README.md" "$root/README.en.md" "$root/LICENSE" "$root/manifest.json" "$package_dir/"
   if [[ "$os" == "windows" ]]; then
     archive_format=zip
     archive_path="$dist/$name.zip"

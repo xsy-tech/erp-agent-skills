@@ -1,11 +1,33 @@
 package distpack
 
 import (
+	"archive/zip"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 )
+
+func TestWriteIncludesEnglishReadme(t *testing.T) {
+	sourceDir, outputPath := prepareArchiveFixture(t)
+	if err := os.WriteFile(filepath.Join(sourceDir, "README.en.md"), []byte("English installation guide\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := Write(Options{Format: FormatZIP, SourceDir: sourceDir, OutputPath: outputPath, RootName: "release", BinaryName: "erp-skill"}); err != nil {
+		t.Fatal(err)
+	}
+	archive, err := zip.OpenReader(outputPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer archive.Close()
+	for _, file := range archive.File {
+		if file.Name == "release/README.en.md" {
+			return
+		}
+	}
+	t.Fatal("release archive is missing the English README")
+}
 
 func TestWriteRejectsUnsafeArchiveNames(t *testing.T) {
 	unsafeNames := []string{
@@ -89,7 +111,7 @@ func prepareArchiveFixture(t *testing.T) (string, string) {
 	if err := os.Mkdir(sourceDir, 0o755); err != nil {
 		t.Fatalf("create source directory: %v", err)
 	}
-	for _, name := range []string{"LICENSE", "README.md", "manifest.json", "erp-skill"} {
+	for _, name := range []string{"LICENSE", "README.md", "README.en.md", "manifest.json", "erp-skill"} {
 		if err := os.WriteFile(filepath.Join(sourceDir, name), []byte(name+"\n"), 0o644); err != nil {
 			t.Fatalf("write fixture %s: %v", name, err)
 		}

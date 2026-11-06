@@ -35,7 +35,7 @@ func TestCLIRejectsUnsafeArchivePaths(t *testing.T) {
 			if err := os.Mkdir(sourceDir, 0o755); err != nil {
 				t.Fatalf("create source directory: %v", err)
 			}
-			for _, name := range []string{"LICENSE", "README.md", "manifest.json", "erp-skill"} {
+			for _, name := range []string{"LICENSE", "README.md", "README.en.md", "manifest.json", "erp-skill"} {
 				if err := os.WriteFile(filepath.Join(sourceDir, name), []byte(name+"\n"), 0o644); err != nil {
 					t.Fatalf("write fixture %s: %v", name, err)
 				}

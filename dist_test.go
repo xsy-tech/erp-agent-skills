@@ -387,7 +387,7 @@ func prepareDistFixture(t *testing.T, root string) {
 	if err := os.MkdirAll(filepath.Join(root, "scripts"), 0o755); err != nil {
 		t.Fatalf("create fixture root: %v", err)
 	}
-	for _, name := range []string{"README.md", "LICENSE", "manifest.json"} {
+	for _, name := range []string{"README.md", "README.en.md", "LICENSE", "manifest.json"} {
 		content := readTestFile(t, name)
 		if err := os.WriteFile(filepath.Join(root, name), content, 0o644); err != nil {
 			t.Fatalf("write fixture %s: %v", name, err)
@@ -424,6 +424,7 @@ func expectedArchiveEntries(t *testing.T, archiveName string) []expectedArchiveE
 	return []expectedArchiveEntry{
 		{name: packageName + "/LICENSE", mode: 0o644, content: readTestFile(t, "LICENSE")},
 		{name: packageName + "/README.md", mode: 0o644, content: readTestFile(t, "README.md")},
+		{name: packageName + "/README.en.md", mode: 0o644, content: readTestFile(t, "README.en.md")},
 		{name: packageName + "/manifest.json", mode: 0o644, content: readTestFile(t, "manifest.json")},
 		{name: packageName + "/" + binaryName, mode: 0o755, content: []byte(fakeBinaryContent)},
 	}

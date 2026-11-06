@@ -58,6 +58,8 @@ func TestGenerateCreatesTokenConnectorWithoutLiteralSecret(t *testing.T) {
 	for _, required := range []string{
 		"connector-meta.json", "mcp.json", "token-schema.json", "icon.svg",
 		filepath.Join("skills", "erp-open-platform", "SKILL.md"),
+		filepath.Join("skills", "erp-open-platform", "references", "workflows.en.md"),
+		filepath.Join("skills", "erp-open-platform", "references", "safety.en.md"),
 	} {
 		if _, err := os.Stat(filepath.Join(output, required)); err != nil {
 			t.Fatalf("missing generated file %s: %v", required, err)

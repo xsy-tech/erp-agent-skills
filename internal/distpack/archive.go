@@ -92,6 +92,7 @@ func loadEntries(options Options) ([]archiveEntry, error) {
 	}{
 		{name: "LICENSE", mode: 0o644},
 		{name: "README.md", mode: 0o644},
+		{name: "README.en.md", mode: 0o644},
 		{name: "manifest.json", mode: 0o644},
 		{name: options.BinaryName, mode: 0o755},
 	}

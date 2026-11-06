@@ -1,5 +1,7 @@
 # ERP 术语表
 
+中文 | [English](terminology.en.md)
+
 | 术语 | 含义 |
 | --- | --- |
 | API Key（个人密钥） | 服务端签发的个人数据访问凭证，绑定一个 ERP 用户、租户、Client 及能力集合。 |
