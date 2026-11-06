@@ -103,6 +103,7 @@ The current MCP `tools/list` is authoritative. The server determines your ERP us
 
 ## English documentation
 
+- [v0.1.2 project1 verification and known blockers](docs/verification-v0.1.2-project1.en.md)
 - [Installation, upgrades, removal, and troubleshooting](https://github.com/xsy-tech/erp-agent-skills/blob/main/docs/installation.en.md)
 - [Installation prompts for all three agents](https://github.com/xsy-tech/erp-agent-skills/blob/main/docs/agent-install-prompts.en.md)
 - [Agent usage](https://github.com/xsy-tech/erp-agent-skills/blob/main/docs/agent-usage.en.md)

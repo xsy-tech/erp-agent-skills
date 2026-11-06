@@ -104,6 +104,7 @@ erp-skill install workbuddy --url https://erp-open.example.com/mcp --output ./er
 
 ## 中英文文档导航
 
+- [v0.1.2 project1 验证记录与已知阻塞](docs/verification-v0.1.2-project1.md)
 - [安装、升级、卸载与故障排查](https://github.com/xsy-tech/erp-agent-skills/blob/main/docs/installation.md)
 - [Codex / Claude Code / WorkBuddy 安装提示词](https://github.com/xsy-tech/erp-agent-skills/blob/main/docs/agent-install-prompts.md)
 - [Agent 使用说明](https://github.com/xsy-tech/erp-agent-skills/blob/main/docs/agent-usage.md)
